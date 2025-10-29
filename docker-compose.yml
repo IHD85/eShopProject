@@ -1,0 +1,118 @@
+version: '3.9'
+
+services:
+  # --- RabbitMQ Broker ---
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    env_file:
+      - ./.docker/env/rabbit.env
+    ports:
+      - "5672:5672"   # RabbitMQ service
+      - "15672:15672" # Web UI
+    networks:
+      - eshop-network
+
+  # --- Redis Cache (Basket) ---
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: always
+    env_file:
+      - ./.docker/env/redis.env
+    ports:
+      - "6379:6379"
+    networks:
+      - eshop-network
+
+  # --- PostgreSQL Databases ---
+  catalog-db:
+    image: postgres:16
+    container_name: catalog-db
+    restart: always
+    env_file:
+      - ./.docker/env/postgres.env
+    environment:
+      POSTGRES_DB: CatalogDb
+    volumes:
+      - catalog_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - eshop-network
+
+  basket-db:
+    image: postgres:16
+    container_name: basket-db
+    restart: always
+    env_file:
+      - ./.docker/env/postgres.env
+    environment:
+      POSTGRES_DB: BasketDb
+    volumes:
+      - basket_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - eshop-network
+
+  order-db:
+    image: postgres:16
+    container_name: order-db
+    restart: always
+    env_file:
+      - ./.docker/env/postgres.env
+    environment:
+      POSTGRES_DB: OrderDb
+    volumes:
+      - order_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    networks:
+      - eshop-network
+
+  identity-db:
+    image: postgres:16
+    container_name: identity-db
+    restart: always
+    env_file:
+      - ./.docker/env/postgres.env
+    environment:
+      POSTGRES_DB: IdentityDb
+    volumes:
+      - identity_data:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+    networks:
+      - eshop-network
+
+  # --- Gateway API (YARP) ---
+  gateway:
+    build:
+      context: .
+      dockerfile: Gateway/Gateway.Api/Dockerfile
+    container_name: gateway
+    restart: always
+    depends_on:
+      - rabbitmq
+      - redis
+      - catalog-db
+      - basket-db
+      - order-db
+      - identity-db
+    ports:
+      - "8080:8080"
+    networks:
+      - eshop-network
+
+# --- Networks and Volumes ---
+networks:
+  eshop-network:
+    driver: bridge
+
+volumes:
+  catalog_data:
+  basket_data:
+  order_data:
+  identity_data:
