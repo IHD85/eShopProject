@@ -5,6 +5,9 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 using RabbitMQ.Client;
+using eShop.Basket.Application.Services;
+using eShop.BuildingBlocks.EventBus;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +18,9 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 // --- Services ---
+builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
+builder.Services.AddScoped<BasketService>();
+
 
 // Redis cache
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>

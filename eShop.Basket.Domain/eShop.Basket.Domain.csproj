@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\eShop.BuildingBlocks.EventBus\eShop.BuildingBlocks.EventBus.csproj" />
+  </ItemGroup>
+
 </Project>
