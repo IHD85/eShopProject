@@ -7,13 +7,13 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY . .
-WORKDIR "/src/Gateway/Gateway.Api"
-RUN dotnet restore
-RUN dotnet build -c Release -o /app/build
+WORKDIR "/src/Gateway.Api"
+RUN dotnet restore "Gateway.Api.csproj"
+RUN dotnet build "Gateway.Api.csproj" -c Release -o /app/build
 
 # ===== Stage 3: publish =====
 FROM build AS publish
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish "Gateway.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # ===== Stage 4: final runtime image =====
 FROM base AS final

@@ -91,7 +91,7 @@ services:
   gateway:
     build:
       context: .
-      dockerfile: Gateway/Gateway.Api/Dockerfile
+      dockerfile: Gateway.Api/Dockerfile 
     container_name: gateway
     restart: always
     depends_on:
@@ -104,14 +104,12 @@ services:
     ports:
       - "8080:8080"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
     networks:
       - eshop-network
-
-      
 
 # --- Networks and Volumes ---
 networks:
