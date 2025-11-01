@@ -35,21 +35,27 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 builder.Services.AddSingleton<IConnection>(sp =>
 {
     var config = builder.Configuration.GetSection("RabbitMQ");
+    var env = builder.Environment.EnvironmentName;
 
-    // Opret factory via interface
-    IConnectionFactory factory = new ConnectionFactory()
+    var host = env == "Development" ? "localhost" : (config["Host"] ?? "rabbitmq");
+
+    var factory = new ConnectionFactory()
     {
-        HostName = config["Host"] ?? "localhost",
+        HostName = host,
         UserName = config["Username"] ?? "guest",
         Password = config["Password"] ?? "guest"
     };
 
-    // ✅ Ny måde i v7.0.0: brug IConnectionFactoryExtensions
     return factory.CreateConnectionAsync().GetAwaiter().GetResult();
 });
 
 // Controllers, Swagger og HealthCheck
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null; // Bevar PascalCase
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

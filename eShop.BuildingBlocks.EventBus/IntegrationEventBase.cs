@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace eShop.BuildingBlocks.EventBus
 {
-    public abstract class IntegrationEventBase
+    public class IntegrationEventBase
     {
-        public Guid Id { get; private set; } = Guid.NewGuid();
-        public DateTime CreationDate { get; private set; } = DateTime.UtcNow;
+        public Guid Id { get; init; } = Guid.NewGuid();
+        public DateTime CreationDate { get; init; } = DateTime.UtcNow;
     }
 }
+

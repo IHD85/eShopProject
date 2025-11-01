@@ -7,15 +7,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="7.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="9.0.0" />
     <PackageReference Include="RabbitMQ.Client" Version="7.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\eShop.Basket.Domain\eShop.Basket.Domain.csproj" />
     <ProjectReference Include="..\eShop.BuildingBlocks.EventBus\eShop.BuildingBlocks.EventBus.csproj" />
     <ProjectReference Include="..\eShop.Order.Application\eShop.Order.Application.csproj" />
+    <ProjectReference Include="..\eShop.Order.Domain\eShop.Order.Domain.csproj" />
     <ProjectReference Include="..\eShop.Order.Infrastructure\eShop.Order.Infrastructure.csproj" />
   </ItemGroup>
 

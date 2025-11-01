@@ -1,6 +1,6 @@
 ﻿using eShop.BuildingBlocks.EventBus;
 
-namespace eShop.Basket.Domain.IntegrationEvents
+namespace eShop.Order.API.IntegrationEvents.Events
 {
     public class BasketCheckedOutIntegrationEvent : IntegrationEventBase
     {

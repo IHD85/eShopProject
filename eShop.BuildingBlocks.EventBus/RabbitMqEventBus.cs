@@ -1,63 +1,90 @@
-﻿using System.Text;
+﻿using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
-using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+
 
 namespace eShop.BuildingBlocks.EventBus
 {
-    public class RabbitMqEventBus : IEventBus, IAsyncDisposable
+    public class RabbitMqEventBus : IEventBus
     {
         private readonly IConnection _connection;
         private readonly IChannel _channel;
-        private readonly ILogger<RabbitMqEventBus> _logger;
+        private readonly IServiceProvider _serviceProvider;
+        private const string ExchangeName = "eshop_exchange";
 
-        public RabbitMqEventBus(ILogger<RabbitMqEventBus> logger)
+        private readonly JsonSerializerOptions _jsonOptions = new()
         {
-            _logger = logger;
+            PropertyNamingPolicy = null, // 🔹 Bevar PascalCase
+            WriteIndented = true
+        };
 
-            var factory = new ConnectionFactory
-            {
-                HostName = "localhost",
-                UserName = "guest",
-                Password = "guest"
-            };
-
-            // Opret forbindelse og channel (RabbitMQ v7)
-            _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
+        public RabbitMqEventBus(IConnection connection, IServiceProvider serviceProvider)
+        {
+            _connection = connection;
             _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
+            _serviceProvider = serviceProvider;
 
-            // Opret exchange (RabbitMQ v7)
             _channel.ExchangeDeclareAsync(
-                exchange: "eshop_exchange",
-                type: ExchangeType.Topic,
+                ExchangeName,
+                ExchangeType.Topic,
                 durable: true
             ).GetAwaiter().GetResult();
         }
 
         public void Publish(IntegrationEventBase @event)
         {
-            var routingKey = @event.GetType().Name;
-            var body = JsonSerializer.SerializeToUtf8Bytes(@event);
+            var routingKey = @event.GetType().Name.ToLowerInvariant();
 
-            // ✅ Korrekt metodekald i v7: ingen properties-parameter
+            // vigtig: brug runtime-typen
+            var message = JsonSerializer.Serialize(@event, @event.GetType(), _jsonOptions);
+
+            var body = Encoding.UTF8.GetBytes(message);
+
             _channel.BasicPublishAsync(
-                exchange: "eshop_exchange",
+                exchange: ExchangeName,
                 routingKey: routingKey,
-                mandatory: false,
+                mandatory: true,
                 body: body
             ).GetAwaiter().GetResult();
 
-            _logger.LogInformation("Published event: {EventName}", routingKey);
+            Console.WriteLine($"📤 Published event {routingKey}: {message}");
         }
 
-        public async ValueTask DisposeAsync()
+        public void Subscribe<T, TH>()
+            where T : IntegrationEventBase
+            where TH : IIntegrationEventHandler<T>
         {
-            if (_channel is not null)
-                await _channel.CloseAsync();
+            var routingKey = typeof(T).Name.ToLowerInvariant();
+            var queueName = $"{routingKey}.queue";
 
-            if (_connection is not null)
-                await _connection.CloseAsync();
+            _channel.QueueDeclareAsync(
+                queue: queueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false
+            ).GetAwaiter().GetResult();
+
+            _channel.QueueBindAsync(queueName, ExchangeName, routingKey)
+                .GetAwaiter().GetResult();
+
+            var consumer = new AsyncEventingBasicConsumer(_channel);
+            consumer.ReceivedAsync += async (sender, ea) =>
+            {
+                var json = Encoding.UTF8.GetString(ea.Body.ToArray());
+                var eventObj = JsonSerializer.Deserialize<T>(json, _jsonOptions); // ✅ Brug samme options
+
+                using var scope = _serviceProvider.CreateScope();
+                var handler = scope.ServiceProvider.GetRequiredService<TH>();
+                await handler.Handle(eventObj!);
+            };
+
+            _channel.BasicConsumeAsync(
+                queue: queueName,
+                autoAck: true,
+                consumer: consumer
+            ).GetAwaiter().GetResult();
         }
     }
 }
