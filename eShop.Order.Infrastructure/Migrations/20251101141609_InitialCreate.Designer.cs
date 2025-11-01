@@ -12,20 +12,20 @@ using eShop.Order.Infrastructure.Data;
 namespace eShop.Order.Infrastructure.Migrations
 {
     [DbContext(typeof(OrderDbContext))]
-    [Migration("20251030132218_InitOrderDb")]
-    partial class InitOrderDb
+    [Migration("20251101141609_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("eShop.Order.Infrastructure.Entities.OrderEntity", b =>
+            modelBuilder.Entity("eShop.Order.Domain.Entities.OrderEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -45,10 +45,10 @@ namespace eShop.Order.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
-            modelBuilder.Entity("eShop.Order.Infrastructure.Entities.OrderItemEntity", b =>
+            modelBuilder.Entity("eShop.Order.Domain.Entities.OrderItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -56,11 +56,11 @@ namespace eShop.Order.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("OrderEntityId")
+                    b.Property<int>("OrderId")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
+                    b.Property<int>("ProductId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ProductName")
                         .IsRequired()
@@ -69,23 +69,28 @@ namespace eShop.Order.Infrastructure.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("numeric");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderEntityId");
+                    b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems", (string)null);
+                    b.ToTable("OrderItems");
                 });
 
-            modelBuilder.Entity("eShop.Order.Infrastructure.Entities.OrderItemEntity", b =>
+            modelBuilder.Entity("eShop.Order.Domain.Entities.OrderItem", b =>
                 {
-                    b.HasOne("eShop.Order.Infrastructure.Entities.OrderEntity", null)
+                    b.HasOne("eShop.Order.Domain.Entities.OrderEntity", "Order")
                         .WithMany("Items")
-                        .HasForeignKey("OrderEntityId")
+                        .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Order");
                 });
 
-            modelBuilder.Entity("eShop.Order.Infrastructure.Entities.OrderEntity", b =>
+            modelBuilder.Entity("eShop.Order.Domain.Entities.OrderEntity", b =>
                 {
                     b.Navigation("Items");
                 });

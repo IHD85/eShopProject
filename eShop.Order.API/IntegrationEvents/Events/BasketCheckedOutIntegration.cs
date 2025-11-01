@@ -4,13 +4,16 @@ namespace eShop.Order.API.IntegrationEvents.Events
 {
     public class BasketCheckedOutIntegrationEvent : IntegrationEventBase
     {
-        public string CustomerId { get; init; }
+        public required string CustomerId { get; set; }
         public decimal TotalPrice { get; init; }
+        public List<BasketItemDto> Items { get; init; } = new();
+    }
 
-        public BasketCheckedOutIntegrationEvent(string customerId, decimal totalPrice)
-        {
-            CustomerId = customerId;
-            TotalPrice = totalPrice;
-        }
+    public class BasketItemDto
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = default!;
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
     }
 }

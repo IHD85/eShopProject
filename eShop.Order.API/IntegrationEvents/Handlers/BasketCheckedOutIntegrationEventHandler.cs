@@ -1,9 +1,9 @@
 ﻿using eShop.BuildingBlocks.EventBus;
 using eShop.Order.API.IntegrationEvents.Events;
+using eShop.Order.Domain.Entities;
 using eShop.Order.Infrastructure.Data;
-using eShop.Order.Infrastructure.Entities;
 using Microsoft.Extensions.Logging;
-
+using System.Linq;
 
 namespace eShop.Order.API.IntegrationEvents.Handlers
 {
@@ -31,20 +31,28 @@ namespace eShop.Order.API.IntegrationEvents.Handlers
                     return;
                 }
 
-                _logger.LogInformation(
-                    $"📦 Creating order for customer '{@event.CustomerId}' with total {@event.TotalPrice}");
-
-                var order = new OrderEntity
+                if (@event.Items == null || @event.Items.Count == 0)
                 {
-                    CustomerId = @event.CustomerId,
-                    TotalPrice = @event.TotalPrice,
-                    CreatedAt = DateTime.UtcNow
-                };
+                    _logger.LogWarning($"⚠️ Received order with no items for customer '{@event.CustomerId}'");
+                }
 
+                    var order = new OrderEntity
+                    {
+                        CustomerId = @event.CustomerId,
+                        TotalPrice = @event.TotalPrice,
+                        CreatedAt = DateTime.UtcNow,
+                        Items = (@event.Items ?? new List<BasketItemDto>())
+                        .Select(i => new OrderItem
+                        {
+                            ProductName = i.ProductName,
+                            Quantity = i.Quantity,
+                            UnitPrice = i.Price
+                        }).ToList()
+                                };
                 _dbContext.Orders.Add(order);
                 await _dbContext.SaveChangesAsync();
 
-                _logger.LogInformation($"✅ Order created for customer '{@event.CustomerId}' with total {@event.TotalPrice}");
+                _logger.LogInformation($"✅ Order created for customer '{@event.CustomerId}' with {order.Items.Count} items, total {@event.TotalPrice}");
             }
             catch (Exception ex)
             {

@@ -60,15 +60,21 @@ namespace eShop.Basket.Application.Services
 
             var totalPrice = basket.Items.Sum(i => i.Price * i.Quantity);
 
-            // ✅ Sørg for at sende data korrekt
             var eventMessage = new BasketCheckedOutIntegrationEvent(
-             basket.CustomerId,
-             totalPrice
-             );
-            Console.WriteLine($"[DEBUG] Sending event: CustomerId={basket.CustomerId}, TotalPrice={totalPrice}");
-            _eventBus.Publish(eventMessage);
+                basket.CustomerId,
+                totalPrice,
+                basket.Items.Select(i => new BasketItemDto
+                {
+                    ProductId = i.ProductId,
+                    ProductName = i.ProductName,
+                    Price = i.Price,
+                    Quantity = i.Quantity
+                }).ToList()
+            );
 
-            Console.WriteLine($"✅ Checkout event sent for customer {basket.CustomerId} with total {totalPrice}");
+            _eventBus.Publish(eventMessage);
+            Console.WriteLine($"✅ Checkout event sent for customer {basket.CustomerId} with {basket.Items.Count} items and total {totalPrice}");
         }
+
     }
 }
