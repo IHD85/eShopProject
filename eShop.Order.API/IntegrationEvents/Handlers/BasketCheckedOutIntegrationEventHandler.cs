@@ -3,7 +3,6 @@ using eShop.Order.API.IntegrationEvents.Events;
 using eShop.Order.Domain.Entities;
 using eShop.Order.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
-using System.Linq;
 
 namespace eShop.Order.API.IntegrationEvents.Handlers
 {
@@ -36,23 +35,31 @@ namespace eShop.Order.API.IntegrationEvents.Handlers
                     _logger.LogWarning($"⚠️ Received order with no items for customer '{@event.CustomerId}'");
                 }
 
-                    var order = new OrderEntity
+                //  Opret ny order og link items korrekt
+                var order = new OrderEntity
+                {
+                    CustomerId = @event.CustomerId,
+                    CreatedAt = DateTime.UtcNow,
+                    TotalPrice = @event.TotalPrice,
+                    Items = new List<OrderItem>()
+                };
+
+                foreach (var item in @event.Items ?? Enumerable.Empty<BasketItemDto>())
+                {
+                    order.Items.Add(new OrderItem
                     {
-                        CustomerId = @event.CustomerId,
-                        TotalPrice = @event.TotalPrice,
-                        CreatedAt = DateTime.UtcNow,
-                        Items = (@event.Items ?? new List<BasketItemDto>())
-                        .Select(i => new OrderItem
-                        {
-                            ProductName = i.ProductName,
-                            Quantity = i.Quantity,
-                            UnitPrice = i.Price
-                        }).ToList()
-                                };
+                        ProductId = item.ProductId,
+                        ProductName = item.ProductName,
+                        UnitPrice = item.Price,
+                        Quantity = item.Quantity,
+                        Order = order // vigtigt for EF relationen
+                    });
+                }
+
                 _dbContext.Orders.Add(order);
                 await _dbContext.SaveChangesAsync();
 
-                _logger.LogInformation($"✅ Order created for customer '{@event.CustomerId}' with {order.Items.Count} items, total {@event.TotalPrice}");
+                _logger.LogInformation($"🟢 Order saved for customer '{@event.CustomerId}' with {order.Items.Count} items (Total: {@event.TotalPrice})");
             }
             catch (Exception ex)
             {

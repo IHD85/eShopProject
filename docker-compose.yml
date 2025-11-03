@@ -11,8 +11,8 @@ services:
     env_file:
       - ./.docker/env/rabbit.env
     ports:
-      - "5672:5672"   # Message broker
-      - "15672:15672" # Web UI
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - eshop-network
 
@@ -31,24 +31,26 @@ services:
       - eshop-network
 
   # ======================
-  # POSTGRESQL DATABASES
+  # CATALOG DATABASE
   # ======================
-
   catalog-db:
     image: postgres:16
     container_name: catalog-db
     restart: always
-    env_file:
-      - ./.docker/env/postgres.env
     environment:
+      POSTGRES_USER: catalog
+      POSTGRES_PASSWORD: catalog
       POSTGRES_DB: CatalogDb
+    ports:
+      - "5437:5432"
     volumes:
       - catalog_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
     networks:
       - eshop-network
 
+  # ======================
+  # BASKET DATABASE
+  # ======================
   basket-db:
     image: postgres:16
     container_name: basket-db
@@ -64,6 +66,9 @@ services:
     networks:
       - eshop-network
 
+  # ======================
+  # ORDER DATABASE
+  # ======================
   order-db:
     image: postgres:16
     container_name: order-db
@@ -79,6 +84,9 @@ services:
     networks:
       - eshop-network
 
+  # ======================
+  # IDENTITY DATABASE
+  # ======================
   identity-db:
     image: postgres:16
     container_name: identity-db
@@ -91,6 +99,34 @@ services:
       - identity_data:/var/lib/postgresql/data
     ports:
       - "5436:5432"
+    networks:
+      - eshop-network
+
+  # ======================
+  # CATALOG MICRO SERVICE
+  # ======================
+  catalog-api:
+    build:
+      context: .
+      dockerfile: eShop.Catalog.API/Dockerfile
+    container_name: catalog-api
+    depends_on:
+      - catalog-db
+      - rabbitmq
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Docker"
+      ConnectionStrings__CatalogDb: "Host=catalog-db;Port=5432;Database=CatalogDb;Username=catalog;Password=catalog"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Username: "guest"
+      RabbitMQ__Password: "guest"
+    ports:
+      - "8083:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: always
     networks:
       - eshop-network
 
@@ -164,6 +200,7 @@ services:
     depends_on:
       - basket-api
       - order-api
+      - catalog-api
       - rabbitmq
     environment:
       ASPNETCORE_ENVIRONMENT: "Docker"

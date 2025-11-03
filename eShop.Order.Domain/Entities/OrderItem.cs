@@ -10,6 +10,6 @@
 
         // Relation til Order
         public int OrderId { get; set; }
-        public OrderEntity Order { get; set; } = default!;
+        public OrderEntity? Order { get; set; } 
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
 using eShop.Order.API.IntegrationEvents.Events;
 using eShop.Order.API.IntegrationEvents.Handlers;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +18,8 @@ builder.Configuration
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = null; // Bevar PascalCase
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -30,17 +32,14 @@ builder.Services.AddHealthChecks()
     {
         var config = builder.Configuration.GetSection("RabbitMQ");
         var env = builder.Environment.EnvironmentName;
-
         var host = env == "Development" ? "localhost" : (config["Host"] ?? "rabbitmq");
 
-        var factory = new ConnectionFactory()
+        var factory = new ConnectionFactory
         {
             HostName = host,
             UserName = config["Username"] ?? "guest",
             Password = config["Password"] ?? "guest"
         };
-
-        // Returnér en testforbindelse til HealthCheck
         return factory.CreateConnectionAsync().GetAwaiter().GetResult();
     }, name: "rabbitmq_health");
 
@@ -50,15 +49,14 @@ builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("OrderDb"));
 });
 
-// --- RabbitMQ Connection (bruges af EventBus) ---
+// --- RabbitMQ Connection ---
 builder.Services.AddSingleton<IConnection>(sp =>
 {
     var config = builder.Configuration.GetSection("RabbitMQ");
     var env = builder.Environment.EnvironmentName;
-
     var host = env == "Development" ? "localhost" : (config["Host"] ?? "rabbitmq");
 
-    var factory = new ConnectionFactory()
+    var factory = new ConnectionFactory
     {
         HostName = host,
         UserName = config["Username"] ?? "guest",
@@ -74,6 +72,13 @@ builder.Services.AddTransient<BasketCheckedOutIntegrationEventHandler>();
 
 var app = builder.Build();
 
+// --- Automatiske migrationer ---
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+    db.Database.Migrate(); // ✅ Opretter tabeller automatisk, hvis de mangler
+}
+
 // --- Swagger ---
 if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docker")
 {
@@ -85,11 +90,29 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docke
 app.MapControllers();
 app.MapHealthChecks("/health");
 
-// ✅ Subscribe til Basket event ved opstart
-using (var scope = app.Services.CreateScope())
+// --- RabbitMQ: vent og subscribe ---
+_ = Task.Run(async () =>
 {
-    var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
-    eventBus.Subscribe<BasketCheckedOutIntegrationEvent, BasketCheckedOutIntegrationEventHandler>();
-}
+    var maxRetries = 10;
+    var delay = TimeSpan.FromSeconds(5);
+
+    for (int i = 0; i < maxRetries; i++)
+    {
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
+            eventBus.Subscribe<BasketCheckedOutIntegrationEvent, BasketCheckedOutIntegrationEventHandler>();
+
+            Console.WriteLine("✅ [Order.API] Successfully subscribed to BasketCheckedOutIntegrationEvent");
+            break;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Retry {i + 1}/{maxRetries}: RabbitMQ not ready - {ex.Message}");
+            await Task.Delay(delay);
+        }
+    }
+});
 
 app.Run();

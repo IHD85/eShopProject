@@ -1,34 +1,89 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+ï»¿using eShop.BuildingBlocks.EventBus;
+using eShop.Catalog.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using RabbitMQ.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Indlæs konfiguration (inkl. Docker-miljø)
+// --- Konfiguration ---
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
 
-// Tilføj standardservices (kan udvides senere med DbContext, RabbitMQ osv.)
-builder.Services.AddControllers();
+// --- Services ---
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null; // Bevar PascalCase
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// --- Health Checks ---
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("CatalogDb")!)
+    .AddRabbitMQ(sp =>
+    {
+        var config = builder.Configuration.GetSection("RabbitMQ");
+        var env = builder.Environment.EnvironmentName;
+        var host = env == "Development" ? "localhost" : (config["Host"] ?? "rabbitmq");
+
+        var factory = new ConnectionFactory()
+        {
+            HostName = host,
+            UserName = config["Username"] ?? "guest",
+            Password = config["Password"] ?? "guest"
+        };
+        return factory.CreateConnectionAsync().GetAwaiter().GetResult();
+    }, name: "rabbitmq_health");
+
+// --- PostgreSQL ---
+builder.Services.AddDbContext<CatalogDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("CatalogDb"));
+});
+
+// --- RabbitMQ Connection (bruges af EventBus) ---
+builder.Services.AddSingleton<IConnection>(sp =>
+{
+    var config = builder.Configuration.GetSection("RabbitMQ");
+    var env = builder.Environment.EnvironmentName;
+
+    var host = env == "Development" ? "localhost" : (config["Host"] ?? "rabbitmq");
+
+    var factory = new ConnectionFactory()
+    {
+        HostName = host,
+        UserName = config["Username"] ?? "guest",
+        Password = config["Password"] ?? "guest"
+    };
+
+    return factory.CreateConnectionAsync().GetAwaiter().GetResult();
+});
+
+// --- EventBus ---
+builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
+
 var app = builder.Build();
 
-// Aktiver Swagger i udvikling
+// --- Automatisk migration af CatalogDb ---
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+    db.Database.Migrate(); // âœ… Opretter tabeller (CatalogItems, CatalogBrands, CatalogTypes)
+}
+
+// --- Swagger ---
 if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docker")
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
+// --- Health & Controllers ---
 app.MapControllers();
-
-app.MapGet("/", () => $"Catalog.API running in environment: {app.Environment.EnvironmentName}");
+app.MapHealthChecks("/health");
 
 app.Run();
