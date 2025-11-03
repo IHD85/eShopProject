@@ -1,6 +1,7 @@
 ﻿using eShop.Basket.Domain.Entities;
 using eShop.Basket.Domain.IntegrationEvents;
 using eShop.BuildingBlocks.EventBus;
+using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System.Text.Json;
 
@@ -10,11 +11,13 @@ namespace eShop.Basket.Application.Services
     {
         private readonly IDatabase _redis;
         private readonly IEventBus _eventBus;
+        private readonly ILogger<BasketService> _logger;
 
-        public BasketService(IConnectionMultiplexer redis, IEventBus eventBus)
+        public BasketService(IConnectionMultiplexer redis, IEventBus eventBus, ILogger<BasketService> logger)
         {
             _redis = redis.GetDatabase();
             _eventBus = eventBus;
+            _logger = logger;
         }
 
         // ✅ GET basket
@@ -24,9 +27,15 @@ namespace eShop.Basket.Application.Services
             var data = await _redis.StringGetAsync(key);
 
             if (data.IsNullOrEmpty)
+            {
+                _logger.LogWarning("Basket not found for {CustomerId}", customerId);
                 return null;
+            }
 
-            return JsonSerializer.Deserialize<ShoppingBasket>(data!);
+            var basket = JsonSerializer.Deserialize<ShoppingBasket>(data!);
+            _logger.LogInformation("Loaded basket for {CustomerId} with {ItemCount} items",
+                customerId, basket?.Items.Count ?? 0);
+            return basket;
         }
 
         // ✅ POST / update basket
@@ -36,6 +45,8 @@ namespace eShop.Basket.Application.Services
             var json = JsonSerializer.Serialize(basket);
 
             await _redis.StringSetAsync(key, json);
+            _logger.LogInformation("Updated basket for {CustomerId} with {ItemCount} items",
+                basket.CustomerId, basket.Items.Count);
             return basket;
         }
 
@@ -46,19 +57,34 @@ namespace eShop.Basket.Application.Services
             bool exists = await _redis.KeyExistsAsync(key);
 
             if (!exists)
+            {
+                _logger.LogWarning("Attempt to delete non-existing basket {CustomerId}", customerId);
                 return false;
+            }
 
             await _redis.KeyDeleteAsync(key);
+            _logger.LogInformation("Deleted basket for {CustomerId}", customerId);
             return true;
         }
 
         // ✅ CHECKOUT: send RabbitMQ event
         public void Checkout(ShoppingBasket basket)
         {
-            if (basket == null || string.IsNullOrEmpty(basket.CustomerId) || basket.Items == null || !basket.Items.Any())
+            if (basket == null || string.IsNullOrEmpty(basket.CustomerId))
+            {
+                _logger.LogError("Checkout failed: invalid basket");
                 throw new ArgumentException("Invalid basket data");
+            }
+
+            if (basket.Items == null || !basket.Items.Any())
+            {
+                _logger.LogWarning("Checkout failed: empty basket for {CustomerId}", basket.CustomerId);
+                throw new ArgumentException("Basket is empty");
+            }
 
             var totalPrice = basket.Items.Sum(i => i.Price * i.Quantity);
+            _logger.LogInformation("Starting checkout for {CustomerId} with {Count} items (Total {Total})",
+                basket.CustomerId, basket.Items.Count, totalPrice);
 
             var eventMessage = new BasketCheckedOutIntegrationEvent(
                 basket.CustomerId,
@@ -73,8 +99,8 @@ namespace eShop.Basket.Application.Services
             );
 
             _eventBus.Publish(eventMessage);
-            Console.WriteLine($"✅ Checkout event sent for customer {basket.CustomerId} with {basket.Items.Count} items and total {totalPrice}");
+            _logger.LogInformation("Published BasketCheckedOutIntegrationEvent for {CustomerId} (Total {Total})",
+                basket.CustomerId, totalPrice);
         }
-
     }
 }

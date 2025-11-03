@@ -9,6 +9,7 @@ using eShop.Basket.Application.Services;
 using eShop.BuildingBlocks.EventBus;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Indlæs konfiguration (inkl. Docker)

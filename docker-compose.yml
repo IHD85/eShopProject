@@ -189,6 +189,32 @@ services:
       - eshop-network
     restart: always
 
+    # ======================
+  # IDENTITY MICRO SERVICE
+  # ======================
+  identity-api:
+    build:
+      context: .
+      dockerfile: eShop.Identity.API/Dockerfile
+    container_name: identity-api
+    depends_on:
+      - identity-db
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Docker"
+      ConnectionStrings__IdentityDb: "Host=identity-db;Port=5432;Database=IdentityDb;Username=order;Password=order"
+      Jwt__Key: "ThisIsASuperLongJwtSecretKey_ChangeMe123456789"
+      Jwt__Issuer: "eShopGateway"
+    ports:
+      - "8084:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: always
+    networks:
+      - eshop-network
+
   # ======================
   # GATEWAY (YARP)
   # ======================
@@ -201,6 +227,7 @@ services:
       - basket-api
       - order-api
       - catalog-api
+      - identity-api
       - rabbitmq
     environment:
       ASPNETCORE_ENVIRONMENT: "Docker"

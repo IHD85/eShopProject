@@ -5,23 +5,45 @@ using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Tilføj YARP Reverse Proxy
+// --- YARP Reverse Proxy ---
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
-// Tilføj HealthChecks
+// --- HealthChecks ---
 builder.Services.AddHealthChecks()
     .AddCheck("gateway_alive", () => HealthCheckResult.Healthy("Gateway is running"));
 
+// --- Swagger ---
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
-// Test route
+// --- Swagger UI med links til alle microservices ---
+if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docker")
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "eShop Gateway v1");
+
+        // Eksterne Swagger endpoints fra microservices
+        c.SwaggerEndpoint("http://catalog-api:8080/swagger/v1/swagger.json", "Catalog API");
+        c.SwaggerEndpoint("http://basket-api:8080/swagger/v1/swagger.json", "Basket API");
+        c.SwaggerEndpoint("http://order-api:8080/swagger/v1/swagger.json", "Order API");
+        c.SwaggerEndpoint("http://identity-api:8080/swagger/v1/swagger.json", "Identity API");
+
+        c.RoutePrefix = "swagger"; // Swagger vises på /swagger
+    });
+}
+
+// --- Test route ---
 app.MapGet("/", () => "YARP Gateway is running...");
 
-// HealthCheck endpoint
-app.MapGet("/health", () => Results.Ok("Healthy")); // ✅ Docker kræver et klart "Healthy" svar (HTTP 200)
+// --- HealthCheck endpoint ---
+app.MapGet("/health", () => Results.Ok("Healthy"));
 
-// Reverse Proxy routes
+// --- Reverse Proxy routes ---
 app.MapReverseProxy();
 
 app.Run();

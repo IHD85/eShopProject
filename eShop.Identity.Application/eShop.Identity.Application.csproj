@@ -8,6 +8,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\eShop.Identity.Domain\eShop.Identity.Domain.csproj" />
+    <ProjectReference Include="..\eShop.Identity.Infrastructure\eShop.Identity.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 
 </Project>
