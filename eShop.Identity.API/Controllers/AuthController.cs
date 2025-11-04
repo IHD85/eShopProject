@@ -14,20 +14,46 @@ namespace eShop.Identity.API.Controllers
             _identityService = identityService;
         }
 
+        // ✅ Register almindelig bruger
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] LoginRequest request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            var token = await _identityService.RegisterAsync(request.Username, request.Password);
-            return Ok(new { token });
+            var token = await _identityService.RegisterAsync(request.UserName, request.Password);
+            return Ok(new
+            {
+                message = "User registered successfully",
+                role = "User",
+                token
+            });
         }
 
+        // ✅ Register admin (kun midlertidigt via Swagger)
+        [HttpPost("register-admin")]
+        public async Task<IActionResult> RegisterAdmin([FromBody] RegisterRequest request)
+        {
+            var token = await _identityService.RegisterAdminAsync(request.UserName, request.Password);
+            return Ok(new
+            {
+                message = "Admin registered successfully",
+                role = "Admin",
+                token
+            });
+        }
+
+        // ✅ Login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var token = await _identityService.LoginAsync(request.Username, request.Password);
-            return Ok(new { token });
+            var token = await _identityService.LoginAsync(request.UserName, request.Password);
+            return Ok(new
+            {
+                message = "Login successful",
+                token
+            });
         }
     }
 
-    public record LoginRequest(string Username, string Password);
+    // DTOs
+    public record RegisterRequest(string UserName, string Password);
+    public record LoginRequest(string UserName, string Password);
 }
