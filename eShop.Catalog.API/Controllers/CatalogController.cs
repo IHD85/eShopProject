@@ -3,6 +3,7 @@ using eShop.Catalog.Domain.Entities;
 using eShop.Catalog.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization; // 🔹 Tilføjet for JWT-roller
 
 namespace eShop.Catalog.API.Controllers
 {
@@ -13,6 +14,8 @@ namespace eShop.Catalog.API.Controllers
         private readonly CatalogDbContext _context;
         public CatalogController(CatalogDbContext context) => _context = context;
 
+        // 🔹 Åben for alle brugere (User & Admin)
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetAll() =>
             Ok(await _context.CatalogItems
@@ -20,6 +23,8 @@ namespace eShop.Catalog.API.Controllers
                 .Include(c => c.CatalogType)
                 .ToListAsync());
 
+        // 🔹 Åben for alle brugere (User & Admin)
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -31,6 +36,8 @@ namespace eShop.Catalog.API.Controllers
             return item == null ? NotFound() : Ok(item);
         }
 
+        // 🔹 Kun Admin må oprette nye produkter
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> AddItem([FromBody] CatalogItemCreateDto dto)
         {
@@ -55,6 +62,20 @@ namespace eShop.Catalog.API.Controllers
             _context.CatalogItems.Add(item);
             await _context.SaveChangesAsync();
             return Ok(item);
+        }
+
+        // 🔹 Kun Admin må slette produkter
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteItem(int id)
+        {
+            var item = await _context.CatalogItems.FindAsync(id);
+            if (item == null)
+                return NotFound(new { message = "Item not found" });
+
+            _context.CatalogItems.Remove(item);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }

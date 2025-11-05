@@ -2,6 +2,9 @@
 using eShop.Catalog.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +69,42 @@ builder.Services.AddSingleton<IConnection>(sp =>
 // --- EventBus ---
 builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
 
+// 🔹 JWT start
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = false,
+            ValidateLifetime = true, // ✅ vigtigt for tokenens udløb
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                builder.Configuration["Jwt:Key"] ?? "ThisIsASuperLongJwtSecretKey_ChangeMe123456789"))
+        };
+
+        // 🔍 midlertidig debug-logging
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine("🔴 JWT authentication failed:");
+                Console.WriteLine(context.Exception.ToString());
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                Console.WriteLine("✅ Token validated successfully for user: " +
+                                  context.Principal?.Identity?.Name);
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
+// 🔹 JWT slut
+
 var app = builder.Build();
 
 // --- Automatisk migration af CatalogDb ---
@@ -81,6 +120,10 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docke
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// 🔹 Tilføj middleware
+app.UseAuthentication();
+app.UseAuthorization();
 
 // --- Health & Controllers ---
 app.MapControllers();
