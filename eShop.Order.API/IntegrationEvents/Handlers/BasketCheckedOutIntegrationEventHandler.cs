@@ -1,4 +1,5 @@
 ﻿using eShop.BuildingBlocks.EventBus;
+using eShop.BuildingBlocks.EventBus.Events;
 using eShop.Order.API.IntegrationEvents.Events;
 using eShop.Order.Domain.Entities;
 using eShop.Order.Infrastructure.Data;
@@ -7,17 +8,20 @@ using Microsoft.Extensions.Logging;
 namespace eShop.Order.API.IntegrationEvents.Handlers
 {
     public class BasketCheckedOutIntegrationEventHandler :
-         IIntegrationEventHandler<BasketCheckedOutIntegrationEvent>
+        IIntegrationEventHandler<BasketCheckedOutIntegrationEvent>
     {
         private readonly ILogger<BasketCheckedOutIntegrationEventHandler> _logger;
         private readonly OrderDbContext _dbContext;
+        private readonly IEventBus _eventBus; // ✅ tilføj EventBus
 
         public BasketCheckedOutIntegrationEventHandler(
             ILogger<BasketCheckedOutIntegrationEventHandler> logger,
-            OrderDbContext dbContext)
+            OrderDbContext dbContext,
+            IEventBus eventBus) // ✅ injicer EventBus
         {
             _logger = logger;
             _dbContext = dbContext;
+            _eventBus = eventBus;
         }
 
         public async Task Handle(BasketCheckedOutIntegrationEvent @event)
@@ -30,12 +34,7 @@ namespace eShop.Order.API.IntegrationEvents.Handlers
                     return;
                 }
 
-                if (@event.Items == null || @event.Items.Count == 0)
-                {
-                    _logger.LogWarning($"⚠️ Received order with no items for customer '{@event.CustomerId}'");
-                }
-
-                //  Opret ny order og link items korrekt
+                // 🧾 Opret ny order
                 var order = new OrderEntity
                 {
                     CustomerId = @event.CustomerId,
@@ -52,7 +51,7 @@ namespace eShop.Order.API.IntegrationEvents.Handlers
                         ProductName = item.ProductName,
                         UnitPrice = item.Price,
                         Quantity = item.Quantity,
-                        Order = order // vigtigt for EF relationen
+                        Order = order
                     });
                 }
 
@@ -60,6 +59,19 @@ namespace eShop.Order.API.IntegrationEvents.Handlers
                 await _dbContext.SaveChangesAsync();
 
                 _logger.LogInformation($"🟢 Order saved for customer '{@event.CustomerId}' with {order.Items.Count} items (Total: {@event.TotalPrice})");
+
+                // 📤 Efter ordre gemt: Send event til RabbitMQ
+                var orderCreatedEvent = new OrderCreatedIntegrationEvent(
+                    order.Id.ToString(),
+                    order.Items.Select(i => new OrderItemDto
+                    {
+                        ProductId = i.ProductId,
+                        Quantity = i.Quantity
+                    }).ToList()
+                );
+
+                _eventBus.Publish(orderCreatedEvent);
+                _logger.LogInformation($"📤 Published OrderCreatedIntegrationEvent for OrderId={order.Id}");
             }
             catch (Exception ex)
             {

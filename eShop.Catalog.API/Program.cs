@@ -1,4 +1,6 @@
 ﻿using eShop.BuildingBlocks.EventBus;
+using eShop.BuildingBlocks.EventBus.Events;
+using eShop.Catalog.API.IntegrationEvents.Handlers;
 using eShop.Catalog.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
@@ -69,6 +71,9 @@ builder.Services.AddSingleton<IConnection>(sp =>
 // --- EventBus ---
 builder.Services.AddSingleton<IEventBus, RabbitMqEventBus>();
 
+// 🔹 Registrér Event Handler
+builder.Services.AddTransient<OrderCreatedIntegrationEventHandler>();
+
 // 🔹 JWT start
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -113,6 +118,31 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
     db.Database.Migrate(); // ✅ Opretter tabeller (CatalogItems, CatalogBrands, CatalogTypes)
 }
+
+// --- Subscribe til RabbitMQ events ---
+_ = Task.Run(async () =>
+{
+    var maxRetries = 10;
+    var delay = TimeSpan.FromSeconds(5);
+
+    for (int i = 0; i < maxRetries; i++)
+    {
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
+            eventBus.Subscribe<OrderCreatedIntegrationEvent, OrderCreatedIntegrationEventHandler>();
+
+            Console.WriteLine("📩 [Catalog.API] Subscribed to OrderCreatedIntegrationEvent");
+            break;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Retry {i + 1}/{maxRetries}: RabbitMQ not ready - {ex.Message}");
+            await Task.Delay(delay);
+        }
+    }
+});
 
 // --- Swagger ---
 if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docker")
