@@ -50,6 +50,7 @@ Order.API vil fange eventet og gemme ordren i OrderDb.))))
 du kan finde i browser:
 gateway: http://localhost:8080/basket/api/Basket/cust-9999 
 local: http://localhost:8081/api/Basket/cust-9999
+gateway:http://localhost:8080/basket/api/Basket/cust-9991/checkout
 
 _____________________________________________________________________________________
 
@@ -94,8 +95,108 @@ ________________________________________________________________________________
 identity test gateway postman post
 http://localhost:8080/identity/api/auth/register
 http://localhost:8080/identity/api/auth/register-admin
+http://localhost:8080/identity/api/auth/login
 
 lokal: http://localhost:8084/api/auth/register-admin
 
 test token(jwt)
-https://www.jwt.io/# eShopProject
+https://www.jwt.io/
+________________________________________________________________________________
+Info :
+Når Basket → RabbitMQ → Order modtager basket.checkedout:
+
+Order gemmes i database.
+
+Order sender derefter et OrderCreatedIntegrationEvent via _eventBus.Publish().
+
+Catalog.API, som allerede har Subscribe<OrderCreatedIntegrationEvent, OrderCreatedIntegrationEventHandler>(), modtager det.
+
+Catalog.API reducerer lageret (AvailableStock -= Quantity).
+______________________________________________________________________
+så test i postman:
+Test af hele eShop-flowet
+
+1.Opret Admin:
+POST http://localhost:8080/identity/api/auth/register-admin
+Body:
+{
+  "username": "admin1",
+  "password": "Admin123!"
+}
+Kopier den JWT-token du får tilbage. Den skal bruges i de næste kald som Authorization: Bearer <token>
+
+
+
+2.Tilføj produkt i Catalog
+POST http://localhost:8080/catalog/api/catalog
+Headers:
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+men husk brand og type at add
+Body:
+{
+  "catalogBrandId": 1,
+  "catalogTypeId": 1,
+  "name": "MacBook Pro",
+  "description": "16GB RAM, M3 chip",
+  "price": 17999,
+  "availableStock": 10,
+  "pictureUri": "macbook.png"
+}
+
+
+3. Opret almindelig bruger (kunde)
+-POST http://localhost:8080/identity/api/auth/register
+{
+  "username": "ihab",
+  "password": "User123!"
+}
+
+-Login som bruger for at få token
+POST http://localhost:8080/identity/api/auth/login
+{
+  "username": "ihab",
+  "password": "User123!"
+}
+
+Gem den JWT-token. Den bruges til Basket-kald.
+
+3. Tilføj varer til kurv og gennemfør checkout
+POST http://localhost:8080/basket/api/Basket
+Headers:
+Authorization: Bearer <user-token>
+Content-Type: application/json
+Body:
+{
+  "customerId": "cust-9991",
+  "items": [
+    {
+      "productId": 1,
+      "productName": "MacBook Pro",
+      "price": 17999,
+      "quantity": 2
+    }
+  ]
+}
+
+
+Checkout
+POST http://localhost:8080/basket/api/Basket/cust-9991/checkout
+{
+  "customerId": "cust-9991"
+}
+
+4.Verificér asynkron kommunikation
+Basket.API        sender basket.checkedout event
+Order.API         modtager event, opretter ny ordre og sender OrderCreatedIntegrationEvent
+Catalog.API       modtager event og opdaterer lageret (AvailableStock -= Quantity)
+
+
+5.Tjek databaser i DBeaver eller psql
+
+ Database           Tabel                                   Indhold                      
+ ------------  ----------------------------------  ---------------------------- 
+ CatalogDb          CatalogItems                            Lager opdateret              
+ OrderDb            Orders, OrderItems                      Ny ordre oprettet            
+ BasketDb           tom (fordi Redis bruges til cache)                               
+ IdentityDb         Users                                   Admin og brugere registreret 
