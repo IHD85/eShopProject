@@ -8,6 +8,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Microservices/Catalog/Catalog.API/Catalog.API.csproj", "Microservices/Catalog/Catalog.API/"]
+COPY ["RabbitMQEventBus/RabbitMQEventBus/RabbitMQEventBus.csproj", "RabbitMQEventBus/RabbitMQEventBus/"]
 RUN dotnet restore "Microservices/Catalog/Catalog.API/Catalog.API.csproj"
 COPY . .
 WORKDIR "/src/Microservices/Catalog/Catalog.API"

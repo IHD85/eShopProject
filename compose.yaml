@@ -1,0 +1,78 @@
+﻿services:
+  
+  api-gateway:
+    image: api.gateway
+    build:
+      context: .
+      dockerfile: Gateway/API.Gateway/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Docker"
+    ports:
+      - "7163:7163"
+
+  basket-api:
+    image: eshop.basket.api
+    build:
+      context: .
+      dockerfile: Microservices/Basket/eShop.Basket.API/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Docker"
+  
+
+  catalog-api:
+    image: catalog.api
+    build:
+      context: .
+      dockerfile: Microservices/Catalog/Catalog.API/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Docker"
+
+  identity-api:
+    image: identity.api
+    build:
+      context: .
+      dockerfile: Microservices/Identity/Identity.API/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Docker"
+
+  order-api:
+    image: eshop.order.api
+    build:
+      context: .
+      dockerfile: Microservices/Order/eShop.Order.API/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Docker"
+      
+  redis:
+    image: redis:7
+    container_name: redis-eshop
+    restart: always
+    env_file:
+      - ./.docker/env/redis.env
+    ports:
+      - "6379:6379"
+    
+  
+  rabbitmq:
+    stdin_open: true
+    tty: true
+    container_name: rabbitmq-eshop
+    ports:
+      - 5672:5672
+      - 15672:15672
+    image: rabbitmq:4-management
+  
+  eshop-db:
+    container_name: eshop-database
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5  
+    
