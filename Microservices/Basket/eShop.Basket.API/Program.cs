@@ -61,6 +61,10 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docke
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
+
+
+
+
 app.MapControllers();
 
 app.MapHealthChecks("/health");

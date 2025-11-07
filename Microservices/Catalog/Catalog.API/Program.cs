@@ -53,6 +53,12 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+    db.Database.Migrate(); 
+}
+
 app.MapControllers();
 
 app.Run();
