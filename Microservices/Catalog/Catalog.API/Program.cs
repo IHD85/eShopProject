@@ -52,7 +52,7 @@ else if (app.Environment.IsProduction())
     app.MapScalarApiReference();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
