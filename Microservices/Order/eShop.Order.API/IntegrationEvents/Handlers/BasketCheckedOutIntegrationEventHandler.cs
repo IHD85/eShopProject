@@ -1,9 +1,8 @@
-﻿using eShop.BuildingBlocks.EventBus;
-using eShop.BuildingBlocks.EventBus.Events;
+﻿using eShop.Order.API.Dtos;
 using eShop.Order.API.IntegrationEvents.Events;
 using eShop.Order.Domain.Entities;
 using eShop.Order.Infrastructure.Data;
-using Microsoft.Extensions.Logging;
+using RabbitMQEventBus.Abstractions;
 
 namespace eShop.Order.API.IntegrationEvents.Handlers
 {
@@ -12,12 +11,12 @@ namespace eShop.Order.API.IntegrationEvents.Handlers
     {
         private readonly ILogger<BasketCheckedOutIntegrationEventHandler> _logger;
         private readonly OrderDbContext _dbContext;
-        private readonly IEventBus _eventBus; // ✅ tilføj EventBus
+        private readonly IEventBus _eventBus; 
 
         public BasketCheckedOutIntegrationEventHandler(
             ILogger<BasketCheckedOutIntegrationEventHandler> logger,
             OrderDbContext dbContext,
-            IEventBus eventBus) // ✅ injicer EventBus
+            IEventBus eventBus) 
         {
             _logger = logger;
             _dbContext = dbContext;
@@ -30,11 +29,10 @@ namespace eShop.Order.API.IntegrationEvents.Handlers
             {
                 if (string.IsNullOrWhiteSpace(@event.CustomerId))
                 {
-                    _logger.LogError("❌ Received event with null CustomerId");
+                    _logger.LogError("Received event with null (empty) CustomerId");
                     return;
                 }
 
-                // 🧾 Opret ny order
                 var order = new OrderEntity
                 {
                     CustomerId = @event.CustomerId,
@@ -58,7 +56,7 @@ namespace eShop.Order.API.IntegrationEvents.Handlers
                 _dbContext.Orders.Add(order);
                 await _dbContext.SaveChangesAsync();
 
-                _logger.LogInformation($"🟢 Order saved for customer '{@event.CustomerId}' with {order.Items.Count} items (Total: {@event.TotalPrice})");
+                _logger.LogInformation($"Order saved for customer '{@event.CustomerId}' with {order.Items.Count} items (Total: {@event.TotalPrice})");
 
                 // 📤 Efter ordre gemt: Send event til RabbitMQ
                 var orderCreatedEvent = new OrderCreatedIntegrationEvent(
@@ -70,12 +68,12 @@ namespace eShop.Order.API.IntegrationEvents.Handlers
                     }).ToList()
                 );
 
-                _eventBus.Publish(orderCreatedEvent);
-                _logger.LogInformation($"📤 Published OrderCreatedIntegrationEvent for OrderId={order.Id}");
+                await _eventBus.PublishAsync(orderCreatedEvent);
+                _logger.LogInformation($"Published OrderCreatedIntegrationEvent for OrderId={order.Id}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to create order from BasketCheckedOutIntegrationEvent");
+                _logger.LogError(ex, "Failed to create order from BasketCheckedOutIntegrationEvent");
             }
         }
     }

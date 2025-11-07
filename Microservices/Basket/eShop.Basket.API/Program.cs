@@ -8,18 +8,14 @@ using RabbitMQEventBus.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Indlæs konfiguration (inkl. Docker)
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
 
-// --- Services ---
 builder.Services.AddRabbitMQEventBus(builder.Configuration);
 builder.Services.AddScoped<BasketService>();
 
-
-// Redis cache
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var config = builder.Configuration.GetSection("Redis");
@@ -28,29 +24,10 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     return ConnectionMultiplexer.Connect($"{redisHost}:{redisPort}");
 });
 
-// ✅ RabbitMQ connection - v7.0.0 kræver IConnectionFactory interface
-builder.Services.AddSingleton<IConnection>(sp =>
-{
-    var config = builder.Configuration.GetSection("RabbitMQ");
-    var env = builder.Environment.EnvironmentName;
-
-    var host = env == "Development" ? "localhost" : (config["Host"] ?? "rabbitmq");
-
-    var factory = new ConnectionFactory()
-    {
-        HostName = host,
-        UserName = config["Username"] ?? "guest",
-        Password = config["Password"] ?? "guest"
-    };
-
-    return factory.CreateConnectionAsync().GetAwaiter().GetResult();
-});
-
-// Controllers, Swagger og HealthCheck
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = null; // Bevar PascalCase
+        options.JsonSerializerOptions.PropertyNamingPolicy = null; 
     });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -70,13 +47,12 @@ builder.Services.AddHealthChecks()
             UserName = config["Username"] ?? "guest",
             Password = config["Password"] ?? "guest"
         };
-        return factory.CreateConnectionAsync().GetAwaiter().GetResult(); // ✅ samme ændring her
+        return factory.CreateConnectionAsync().GetAwaiter().GetResult(); 
     },
     name: "rabbitmq_health");
 
 var app = builder.Build();
 
-// Swagger i Docker og lokal udvikling
 if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Docker")
 {
     app.UseSwagger();
@@ -87,10 +63,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
-// HealthCheck endpoint
 app.MapHealthChecks("/health");
 
-// Root test
 app.MapGet("/", () => $"Basket.API running in {app.Environment.EnvironmentName}");
 
 app.Run();

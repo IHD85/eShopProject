@@ -20,7 +20,6 @@ namespace eShop.Order.API.Controllers
             _logger = logger;
         }
 
-        // ✅ GET: /api/order
         [HttpGet]
         public async Task<IActionResult> GetAllOrders()
         {
@@ -28,7 +27,6 @@ namespace eShop.Order.API.Controllers
             return Ok(orders);
         }
 
-        // ✅ GET: /api/order/{customerId}
         [HttpGet("{customerId}")]
         public async Task<IActionResult> GetOrdersByCustomer(string customerId)
         {
@@ -43,7 +41,6 @@ namespace eShop.Order.API.Controllers
             return Ok(orders);
         }
 
-        // ✅ GET: /api/order/details/{orderId}
         [HttpGet("details/{orderId:int}")]
         public async Task<IActionResult> GetOrderDetails(int orderId)
         {
@@ -57,7 +54,6 @@ namespace eShop.Order.API.Controllers
             return Ok(order);
         }
 
-        // ✅ POST: /api/order/create
         [HttpPost("create")]
         public async Task<IActionResult> CreateOrder([FromBody] OrderEntity order)
         {
@@ -72,7 +68,6 @@ namespace eShop.Order.API.Controllers
             return Ok(order);
         }
 
-        // ✅ DELETE: /api/order/{orderId}
         [HttpDelete("{orderId:int}")]
         public async Task<IActionResult> DeleteOrder(int orderId)
         {

@@ -1,13 +1,8 @@
-﻿using eShop.BuildingBlocks.EventBus;
+﻿using RabbitMQEventBus.Events;
 
 namespace eShop.Order.API.IntegrationEvents.Events
 {
-    public class BasketCheckedOutIntegrationEvent : IntegrationEventBase
-    {
-        public required string CustomerId { get; set; }
-        public decimal TotalPrice { get; init; }
-        public List<BasketItemDto> Items { get; init; } = new();
-    }
+    public record BasketCheckedOutIntegrationEvent(string CustomerId, decimal TotalPrice, List<BasketItemDto> Items) : IntegrationEvent;
 
     public class BasketItemDto
     {

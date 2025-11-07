@@ -15,11 +15,13 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="9.0.0" />
-    <PackageReference Include="RabbitMQ.Client" Version="7.0.0" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
   </ItemGroup>
 
   <ItemGroup>
+
+    <ProjectReference Include="..\..\..\RabbitMQEventBus\RabbitMQEventBus\RabbitMQEventBus.csproj" />
 
     <ProjectReference Include="..\eShop.Order.Application\eShop.Order.Application.csproj" />
     <ProjectReference Include="..\eShop.Order.Domain\eShop.Order.Domain.csproj" />
