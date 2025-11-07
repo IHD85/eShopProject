@@ -110,8 +110,9 @@ namespace RabbitMQEventBus.EventBus
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            var factory = _serviceProvider.GetRequiredService<ConnectionFactory>();
-            _rabbitMQconnection = await factory.CreateConnectionAsync();
+            await CreateConnectionWithRetryAsync();
+            
+            
             _consumerChannel = await _rabbitMQconnection.CreateChannelAsync();
 
             await _consumerChannel.ExchangeDeclareAsync(exchange: ExchangeName,
@@ -156,6 +157,35 @@ namespace RabbitMQEventBus.EventBus
         {
             return JsonSerializer.Deserialize(message, eventType, _subscriptionInfo.JsonSerializerOptions) as IntegrationEvent;
         }
+        
+        private async Task<IConnection> CreateConnectionWithRetryAsync(
+            int maxRetries = 10,
+            int delaySeconds = 3)
+        {
+            var factory = _serviceProvider.GetRequiredService<ConnectionFactory>();
+            _rabbitMQconnection = await factory.CreateConnectionAsync();
+            int attempts = 0;
+
+            while (true)
+            {
+                try
+                {
+                    return await factory.CreateConnectionAsync();
+
+                }
+                catch (BrokerUnreachableException) when (attempts < maxRetries)
+                {
+                    attempts++;
+                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                }
+                catch (SocketException) when (attempts < maxRetries)
+                {
+                    attempts++;
+                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                }
+            }
+        }
+
 
     }
 }

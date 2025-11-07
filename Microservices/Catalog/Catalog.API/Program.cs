@@ -1,10 +1,6 @@
 using Catalog.API.Data;
 using Catalog.API.Events;
-using Catalog.API.Services.EventBusBackgroundConsumer;
-using Catalog.API.Services.EventBusService;
 using Microsoft.EntityFrameworkCore;
-using RabbitMQ.Client;
-using RabbitMQEventBus.Abstractions;
 using RabbitMQEventBus.Extensions;
 using Scalar.AspNetCore;
 
@@ -13,7 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddDbContext<CatalogDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 10,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null
+        ));
+});
 
 builder.Services.AddTransient<TestEventHandler>();
 
