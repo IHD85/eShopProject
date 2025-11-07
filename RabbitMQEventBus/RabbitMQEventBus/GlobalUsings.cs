@@ -1,0 +1,9 @@
+﻿global using System.Net.Sockets;
+global using System.Text;
+global using System.Text.Json;
+global using RabbitMQEventBus.Abstractions;
+global using RabbitMQEventBus.Events;
+global using RabbitMQ.Client;
+global using RabbitMQ.Client.Events;
+global using RabbitMQ.Client.Exceptions;
+global using System.Text.Json.Serialization;
