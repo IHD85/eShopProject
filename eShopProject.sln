@@ -53,6 +53,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RabbitMQEventBus", "RabbitM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RabbitMQEventBus", "RabbitMQEventBus\RabbitMQEventBus\RabbitMQEventBus.csproj", "{AAFCC1D3-DFE3-232A-7EB9-4A2D55C76A2F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identity.API", "Microservices\Identity\Identity.API\Identity.API.csproj", "{ABAE3E29-800F-134A-CF89-8363C4B62A64}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,10 @@ Global
 		{AAFCC1D3-DFE3-232A-7EB9-4A2D55C76A2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AAFCC1D3-DFE3-232A-7EB9-4A2D55C76A2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AAFCC1D3-DFE3-232A-7EB9-4A2D55C76A2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABAE3E29-800F-134A-CF89-8363C4B62A64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABAE3E29-800F-134A-CF89-8363C4B62A64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABAE3E29-800F-134A-CF89-8363C4B62A64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABAE3E29-800F-134A-CF89-8363C4B62A64}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -153,6 +159,7 @@ Global
 		{9926ED12-A435-FAC2-6254-819E1F79A985} = {56E84CB9-1E73-41DA-ACF6-C808C7AC293F}
 		{CBC7AF00-6058-3263-7CC4-B020D7361768} = {56E84CB9-1E73-41DA-ACF6-C808C7AC293F}
 		{AAFCC1D3-DFE3-232A-7EB9-4A2D55C76A2F} = {10AAD796-435D-41F6-8B7B-D7C7270E5C33}
+		{ABAE3E29-800F-134A-CF89-8363C4B62A64} = {3B18DB6D-21C3-4174-9F5F-5065D7F80801}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B2BD7A86-63DF-4772-81FC-F4793E8E8A23}
