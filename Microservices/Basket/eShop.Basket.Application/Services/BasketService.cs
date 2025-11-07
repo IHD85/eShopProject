@@ -63,7 +63,7 @@ namespace eShop.Basket.Application.Services
             return true;
         }
 
-        public void Checkout(ShoppingBasket basket)
+        public async Task Checkout(ShoppingBasket basket)
         {
             if (basket == null || string.IsNullOrEmpty(basket.CustomerId))
             {
@@ -91,7 +91,7 @@ namespace eShop.Basket.Application.Services
                 }).ToList()
             );
 
-            _eventBus.PublishAsync(eventMessage);
+            await _eventBus.PublishAsync(eventMessage);
             _logger.LogInformation($"Published {eventMessage.GetType().Name} for {basket.CustomerId} (Total {totalPrice})");
         }
     }
