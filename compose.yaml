@@ -17,6 +17,11 @@
       dockerfile: Microservices/Basket/eShop.Basket.API/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: "Docker"
+    depends_on:
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
   
 
   catalog-api:
@@ -26,6 +31,11 @@
       dockerfile: Microservices/Catalog/Catalog.API/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: "Docker"
+    depends_on:
+     eshop-db:
+      condition: service_healthy
+     rabbitmq:
+      condition: service_healthy
 
   identity-api:
     image: identity.api
@@ -34,6 +44,11 @@
       dockerfile: Microservices/Identity/Identity.API/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: "Docker"
+    depends_on:
+      eshop-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   order-api:
     image: eshop.order.api
@@ -42,6 +57,11 @@
       dockerfile: Microservices/Order/eShop.Order.API/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: "Docker"
+    depends_on:
+      eshop-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
       
   redis:
     image: redis:7
@@ -61,6 +81,11 @@
       - 5672:5672
       - 15672:15672
     image: rabbitmq:4-management
+    healthcheck:
+      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   
   eshop-db:
     container_name: eshop-database

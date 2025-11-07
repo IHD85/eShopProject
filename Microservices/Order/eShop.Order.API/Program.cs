@@ -28,7 +28,12 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<OrderDbContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("OrderDb"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("OrderDb"),
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 10,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null
+        ));
 });
 
 

@@ -1,6 +1,5 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+﻿using System.Net.Sockets;
 using StackExchange.Redis;
-using RabbitMQ.Client;
 using eShop.Basket.Application.Services;
 using RabbitMQEventBus.Extensions;
 
@@ -8,21 +7,42 @@ using RabbitMQEventBus.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-    .AddEnvironmentVariables();
-
-builder.Services.AddRabbitMQEventBus(builder.Configuration);
 builder.Services.AddScoped<BasketService>();
+builder.Services.AddHealthChecks();
+builder.Services.AddRabbitMQEventBus(builder.Configuration);
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var config = builder.Configuration.GetSection("Redis");
     var redisHost = config["Host"] ?? "localhost";
     var redisPort = config["Port"] ?? "6379";
-    return ConnectionMultiplexer.Connect($"{redisHost}:{redisPort}");
+
+    var connectionString = $"{redisHost}:{redisPort}";
+
+    const int maxRetries = 10;
+    const int delaySeconds = 3;
+
+    int attempts = 0;
+
+    while (true)
+    {
+        try
+        {
+            return ConnectionMultiplexer.Connect(connectionString);
+        }
+        catch (RedisConnectionException) when (attempts < maxRetries)
+        {
+            attempts++;
+            Thread.Sleep(TimeSpan.FromSeconds(delaySeconds));
+        }
+        catch (SocketException) when (attempts < maxRetries)
+        {
+            attempts++;
+            Thread.Sleep(TimeSpan.FromSeconds(delaySeconds));
+        }
+    }
 });
+
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -33,23 +53,7 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddHealthChecks()
-    .AddCheck("basket_api_alive", () => HealthCheckResult.Healthy("Basket API is running"))
-    .AddRedis(
-        $"{builder.Configuration["Redis:Host"]}:{builder.Configuration["Redis:Port"]}",
-        name: "redis_health")
-    .AddRabbitMQ(sp =>
-    {
-        var config = builder.Configuration.GetSection("RabbitMQ");
-        IConnectionFactory factory = new ConnectionFactory()
-        {
-            HostName = config["Host"] ?? "localhost",
-            UserName = config["Username"] ?? "guest",
-            Password = config["Password"] ?? "guest"
-        };
-        return factory.CreateConnectionAsync().GetAwaiter().GetResult(); 
-    },
-    name: "rabbitmq_health");
+
 
 var app = builder.Build();
 
