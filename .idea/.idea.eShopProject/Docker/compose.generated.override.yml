@@ -1,20 +1,20 @@
 # This is a generated file. Not intended for manual editing.
 services:
-  order-api:
+  identity-api:
     build:
-      context: "C:\\Users\\seyme\\Desktop\\Projek\\eShopProject"
-      dockerfile: "Microservices/Order/eShop.Order.API/Dockerfile"
+      context: "/Users/seymen/RiderProjects/eShopProject"
+      dockerfile: "Microservices/Identity/Identity.API/Dockerfile"
       target: "base"
     command: []
     entrypoint:
     - "dotnet"
-    - "/app/bin/Debug/net9.0/eShop.Order.API.dll"
+    - "/app/bin/Debug/net9.0/Identity.API.dll"
     environment:
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
-    image: "eshop.order.api:dev"
+    image: "identity.api:dev"
     ports: []
     volumes:
-    - "C:\\Users\\seyme\\Desktop\\Projek\\eShopProject\\Microservices\\Order\\eShop.Order.API:/app:rw"
-    - "C:\\Users\\seyme\\Desktop\\Projek\\eShopProject:/src:rw"
-    - "C:\\Users\\seyme\\.nuget\\packages:/home/app/.nuget/packages"
+    - "/Users/seymen/RiderProjects/eShopProject/Microservices/Identity/Identity.API:/app:rw"
+    - "/Users/seymen/RiderProjects/eShopProject:/src:rw"
+    - "/Users/seymen/.nuget/packages:/home/app/.nuget/packages"
     working_dir: "/app"

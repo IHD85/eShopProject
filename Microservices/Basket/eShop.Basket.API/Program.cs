@@ -1,6 +1,8 @@
 ﻿using System.Net.Sockets;
+using eShop.Basket.API.EventHandlers;
 using StackExchange.Redis;
 using eShop.Basket.Application.Services;
+using eShop.Basket.Domain.Events;
 using RabbitMQEventBus.Extensions;
 
 
@@ -9,7 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<BasketService>();
 builder.Services.AddHealthChecks();
-builder.Services.AddRabbitMQEventBus(builder.Configuration);
+builder.Services.AddRabbitMQEventBus(builder.Configuration)
+    .AddSubscription<ProductPriceChangedEvent, ProductPriceChangedEventHandler>();
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
@@ -17,7 +20,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     var redisHost = config["Host"] ?? "localhost";
     var redisPort = config["Port"] ?? "6379";
 
-    var connectionString = $"{redisHost}:{redisPort}";
+var connectionString = $"{redisHost}:{redisPort},allowAdmin=true";
 
     const int maxRetries = 10;
     const int delaySeconds = 3;

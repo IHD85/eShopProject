@@ -1,8 +1,10 @@
 ﻿using Catalog.API.Data;
 using Catalog.API.Dto;
 using Catalog.API.Entitites;
+using Catalog.API.Events;
 using Catalog.API.Services.EventBusService;
 using Microsoft.AspNetCore.Mvc;
+using RabbitMQEventBus.Abstractions;
 
 namespace Catalog.API.Controllers;
 
@@ -12,11 +14,12 @@ public class CatalogItemController : Controller
 {
     //private readonly EventBusService _eventBusService;
     private readonly CatalogDbContext _db;
+    private readonly IEventBus _eventBus;
 
-    public CatalogItemController(CatalogDbContext db)
+    public CatalogItemController(CatalogDbContext db,  IEventBus eventBus)
     {
         _db = db;
-        //_eventBusService = eventBusService;
+        _eventBus = eventBus;
     }
 
     [HttpGet]
@@ -94,11 +97,36 @@ public class CatalogItemController : Controller
         }
     }
 
-    [HttpPut()]
-    public async Task<IActionResult> UpdateCatalogItem([FromBody] Item catalogItem)
+    [HttpPut("{id}/price")]
+    public async Task<IActionResult> UpdatePrice(int id, [FromBody] decimal price)
     {
-        return Ok(catalogItem.Description);
+        var item = await _db.Items.FindAsync(id);
+        if (item == null) return NotFound();
+
+        item.Price = price;
+        bool changesSaved = await _db.SaveChangesAsync() != 0;
+        
+        if (!changesSaved) return BadRequest();
+
+        if (changesSaved)
+        {
+            await _eventBus.PublishAsync(new ProductPriceChangedEvent(item.Id, (decimal)item.Price));
+        }
+
+        return Ok(item.Price);
     }
+    
+    [HttpGet("test-event/{fakeProductId:int}/{fakePrice:decimal}")]
+    public async Task<IActionResult> EventTesting(int fakeProductId, decimal fakePrice)
+    {
+   
+            await _eventBus.PublishAsync(new ProductPriceChangedEvent(fakeProductId, fakePrice));
+        
+
+        return Ok("maybe it worked bro.");
+    }
+    
+
 
 
 }
