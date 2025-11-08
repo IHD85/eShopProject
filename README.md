@@ -1,202 +1,284 @@
-Test Catalog API
-a)Opret brand:
-POST http://localhost:8083/api/CatalogBrand
+
+# eShop Projekt - Microservices.
+
+****Gruppe****: Ihab, Seymen, Nour og Adil.
+
+---
+
+### Opsætning
+
+Ingen manuel opsætning kræves udover at man kører Docker compose filen.
+
+Man skal dog sørge for at port `5432`, `7163`, `6379`, `15672` og `5672` ikke er i brug.
+
+Disse er bevidst exposed (dog vil man i reel produktion ikke expose alle disse).
+
+---
+
+  
+
+### Build
+
+Før man kører compose filen er det vigtigt at builde projektet.
+```powershell
+
+docker compose build
+
+```
+
+---
+
+  
+
+### Start
+
+
+```powershell
+
+docker compose up
+
+```
+
+---
+
+  
+
+## Gateway (YARP)
+
+Projektet gør brug af en Gateway, hvilket betyder at man ikke direkte kan tilgå de forskellige services.
+
+Gatewayen er udviklet med ****YARP****.
+
+  
+
+Services som kan tilgås via Gatewayen er: ****Basket****, ****Catalog****, ****Order**** og ****Identity****.
+
+Frontendappen i monolitten kan kun tilgå services via gateway.
+
+  
+
+---
+
+  
+
+## Basket Service Endpoints (Med Gateway)
+
+  
+
+### POST: Opret Basket for en kunde med Customer Id
+
+****Localhost URL:****
+http://localhost:7163/basket/Basket
+
+  
+
+****Eksempel JSON request body:****
+
+```json
+
 {
-  "brand": "Apple"
-}
-
-(b) Opret type:
-POST http://localhost:8083/api/CatalogType
-{
-  "type": "Laptop"
-}
-
-
-(c) Opret produkt:
-POST http://localhost:8083/api/Catalog
-{
-  "catalogBrandId": 1,
-  "catalogTypeId": 1,
-  "name": "MacBook Pro 14",
-  "description": "M3 Pro 16GB RAM",
-  "price": 18999.99,
-  "pictureUri": "macbook.png",
-  "availableStock": 10
-}
-
-du kan finde i browser:FX
-gateway: http://localhost:8080/catalog/api/Catalog
-local: http://localhost:8083/api/Catalog
-___________________________________________________________________________________
-
-
-Test Basket API
-
-(a) Tilføj produkt til basket
-POST http://localhost:8081/api/Basket
-{
-  "customerId": "cust-1001",
-  "items": [
-    { "productId": 1, "productName": "Keyboard", "price": 300, "quantity": 1 }
-  ]
-}
-
-
-(b) Hent basket:
-http://localhost:8081/api/Basket/cust-1001
-((((((Dette publicerer BasketCheckedOutIntegrationEvent til RabbitMQ.
-Order.API vil fange eventet og gemme ordren i OrderDb.))))
-
-du kan finde i browser:
-gateway: http://localhost:8080/basket/api/Basket/cust-9999 
-local: http://localhost:8081/api/Basket/cust-9999
-gateway:http://localhost:8080/basket/api/Basket/cust-9991/checkout
-
-_____________________________________________________________________________________
-
-Tjek at ordren blev oprettet
-http://localhost:8082/api/Order
-_________________________________________________________________________________________
-Test via Gateway (YARP)
-
-http://localhost:8080/basket/api/Basket/cust-1001
-______________________________________________________________________________________
-Overvåg RabbitMQ
-
-http://localhost:15672
-
-Login: guest / guest
-
-___________________________________________________________________________________________
-EF-migrations (kun første gang lokalt)
-catalog:
-dotnet ef migrations add InitialCreate -p eShop.Catalog.Infrastructure -s eShop.Catalog.API -o eShop.Catalog.Infrastructure/Migrations
-
-order:
-dotnet ef migrations add InitialCreate -p eShop.Order.Infrastructure -s eShop.Order.API -o eShop.Order.Infrastructure/Migrations
-
-Identity:
-dotnet ef migrations add InitialCreate -p eShop.Identity.Infrastructure -s eShop.Identity.API -o eShop.Identity.Infrastructure/Migrations
-
-
--p = projektet hvor DbContext ligger (Infrastructure)
-
--s = startup projektet (API)
-
--o = hvor migrations skal gemmes
-_____________________________________________________________________________________________________
-
-docker compose up -d --build  ##føste gang
-
-docker compose up -d 
-docker compose down      ## stop docker
-_____________________________________________________________________________________
-
-identity test gateway postman post
-http://localhost:8080/identity/api/auth/register
-http://localhost:8080/identity/api/auth/register-admin
-http://localhost:8080/identity/api/auth/login
-
-lokal: http://localhost:8084/api/auth/register-admin
-
-test token(jwt)
-https://www.jwt.io/
-________________________________________________________________________________
-Info :
-Når Basket → RabbitMQ → Order modtager basket.checkedout:
-
-Order gemmes i database.
-
-Order sender derefter et OrderCreatedIntegrationEvent via _eventBus.Publish().
-
-Catalog.API, som allerede har Subscribe<OrderCreatedIntegrationEvent, OrderCreatedIntegrationEventHandler>(), modtager det.
-
-Catalog.API reducerer lageret (AvailableStock -= Quantity).
-______________________________________________________________________
-så test i postman:
-Test af hele eShop-flowet
-
-1.Opret Admin:
-POST http://localhost:8080/identity/api/auth/register-admin
-Body:
-{
-  "username": "admin1",
-  "password": "Admin123!"
-}
-Kopier den JWT-token du får tilbage. Den skal bruges i de næste kald som Authorization: Bearer <token>
-
-
-
-2.Tilføj produkt i Catalog
-POST http://localhost:8080/catalog/api/catalog
-Headers:
-Authorization: Bearer <admin-token>
-Content-Type: application/json
-men husk brand og type at add
-Body:
-{
-  "catalogBrandId": 1,
-  "catalogTypeId": 1,
-  "name": "MacBook Pro",
-  "description": "16GB RAM, M3 chip",
-  "price": 17999,
-  "availableStock": 10,
-  "pictureUri": "macbook.png"
-}
-
-
-3. Opret almindelig bruger (kunde)
--POST http://localhost:8080/identity/api/auth/register
-{
-  "username": "ihab",
-  "password": "User123!"
-}
-
--Login som bruger for at få token
-POST http://localhost:8080/identity/api/auth/login
-{
-  "username": "ihab",
-  "password": "User123!"
-}
-
-Gem den JWT-token. Den bruges til Basket-kald.
-
-3. Tilføj varer til kurv og gennemfør checkout
-POST http://localhost:8080/basket/api/Basket
-Headers:
-Authorization: Bearer <user-token>
-Content-Type: application/json
-Body:
-{
-  "customerId": "cust-9991",
+"customerId": "cust-1001",
   "items": [
     {
       "productId": 1,
-      "productName": "MacBook Pro",
-      "price": 17999,
-      "quantity": 2
+      "productName": "Keyboard",
+      "price": 300,
+      "quantity": 1
     }
+
   ]
 }
 
+```
 
-Checkout
-POST http://localhost:8080/basket/api/Basket/cust-9991/checkout
+  
+
+Dette tilføjer basket til en Redis database (da baskets er midlertidige).
+
+  
+
+---
+
+  
+
+### GET: Hent en basket for én kunde
+
+****Localhost URL:****
+
+http://localhost:7163/basket/Basket/cust-1001
+
+  
+
+Dette henter basket data for kunden med id `cust-1001`.
+
+  
+
+---
+
+  
+
+### POST: Basket checkout for kunden
+
+****Localhost URL:****
+
+http://localhost:7163/basket/Basket/cust-1001/checkout
+
+  
+
+Ingen JSON body kræves.
+
+Dette vil checkoute kunden med id `cust-1001` og sende en besked til ****RabbitMQ****, som ****Order Service**** er subscribed til.
+
+Derudover slettes basket fra Redis.
+
+  
+
+---
+
+  
+
+## Catalog Service Endpoints (Med Gateway)
+
+  
+
+### POST: Opret ny Catalog Brand
+
+****Localhost URL:****
+
+http://localhost:7163/catalog/catalog-brands/add?brandName=ExampleBrand
+
+ 
+
+****Eksempel:****
+
+Ingen body – brand oprettes via query param.
+
+  
+
+---
+
+  
+
+### GET: Hent alle Catalog Brands
+
+****Localhost URL:****
+
+http://localhost:7163/catalog/catalog-brands
+
+  
+
+---
+
+  
+
+### GET: Hent alle Catalog Types
+
+****Localhost URL:****
+
+http://localhost:7163/catalog/catalog-types
+
+---
+ 
+
+### GET: Tilføj Catalog Type
+
+****Localhost URL:****
+
+http://localhost:7163/catalog/catalog-types/add?typeName=ExampleType
+
+---
+
+  
+
+### GET: Hent alle Catalog Items
+
+****Localhost URL:****
+
+http://localhost:7163/catalog/catalog-items
+
+  
+
+Understøtter: `pageSize`, `pageIndex`, `catalogBrandId`, `catalogTypeId`.
+
+  
+
+---
+
+  
+
+### POST: Opret Catalog Item
+
+****Localhost URL:****
+
+http://localhost:7163/catalog/catalog-items
+
+  
+
+****Eksempel JSON request body:****
+
+```json
+
 {
-  "customerId": "cust-9991"
+"name": "SuperFed Hovedtelefon",
+"description": "Luksus lyd",
+"price": 1999.95,
+"pictureUri": "http://example.com/img.png",
+"catalogTypeId": 1,
+"catalogBrandId": 1
 }
 
-4.Verificér asynkron kommunikation
-Basket.API        sender basket.checkedout event
-Order.API         modtager event, opretter ny ordre og sender OrderCreatedIntegrationEvent
-Catalog.API       modtager event og opdaterer lageret (AvailableStock -= Quantity)
+```
 
+  
 
-5.Tjek databaser i DBeaver eller psql
+---
 
- Database           Tabel                                   Indhold                      
- ------------  ----------------------------------  ---------------------------- 
- CatalogDb          CatalogItems                            Lager opdateret              
- OrderDb            Orders, OrderItems                      Ny ordre oprettet            
- BasketDb           tom (fordi Redis bruges til cache)                               
- IdentityDb         Users                                   Admin og brugere registreret 
+  
+
+### GET: Hent Catalog Item med ID
+
+****Localhost URL:****
+
+http://localhost:7163/catalog/catalog-items/1
+
+  
+
+---
+
+  
+
+### DELETE: Slet Catalog Item
+
+****Localhost URL:****
+
+http://localhost:7163/catalog/catalog-items/1
+
+  
+
+---
+
+  
+
+### PUT: Opdater Catalog Item
+
+****Localhost URL:****
+
+http://localhost:7163/catalog/catalog-items
+
+  
+
+****Eksempel JSON request body:****
+
+```json
+
+{
+"id": 1,
+"name": "Opdateret Hovedtelefon",
+"description": "Endnu bedre luksus lyd",
+"price": 2100.00,
+"pictureUri": "http://example.com/img.png",
+"catalogTypeId": 1,
+"catalogBrandId": 1
+}
+
+```
