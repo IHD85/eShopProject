@@ -24,7 +24,7 @@ builder.Services.AddRabbitMQEventBus(builder.Configuration)
     .AddSubscription<TestEvent, TestEventHandler>();
 //builder.Services.AddSingleton<EventBusService>();
 //builder.Services.AddSingleton<IEventBusService>(sp => sp.GetRequiredService<EventBusService>());
-
+builder.Services.AddHealthChecks();
 //builder.Services.AddHostedService<EventBusBackgroundConsumer>();
 
 
@@ -55,7 +55,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
     db.Database.Migrate(); 
 }
-
+app.MapHealthChecks("/health");
 app.MapControllers();
 
 app.Run();

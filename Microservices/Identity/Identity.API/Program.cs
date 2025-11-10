@@ -25,6 +25,8 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<AppIdentityDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.AddHealthChecks();
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -46,6 +48,8 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppIdentityDbContext>();
     db.Database.Migrate(); 
 }
+
+app.MapHealthChecks("/health");
 
 app.MapControllers();
 

@@ -1,0 +1,8 @@
+{
+    "type": "embedded-mariadb",
+    "port": 3306,
+    "hostname": "",
+    "username": "",
+    "password": "",
+    "dbName": "kuma"
+}
