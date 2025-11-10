@@ -26,20 +26,21 @@
       - "7101:8080"
   
 
+
   catalog-api:
-    image: catalog.api
-    build:
-      context: .
-      dockerfile: Microservices/Catalog/Catalog.API/Dockerfile
+    # PEGER NU PÅ GHCR
+    image: ghcr.io/ihd85/eshopproject/eshop-catalog-service:latest 
     environment:
       ASPNETCORE_ENVIRONMENT: "Docker"
     depends_on:
-     eshop-db:
-      condition: service_healthy
-     rabbitmq:
-      condition: service_healthy
+      eshop-db:
+        condition: service_healthy 
+      rabbitmq:
+        condition: service_healthy 
     ports:
       - "7102:8080"
+  
+  
 
   identity-api:
     image: identity.api
