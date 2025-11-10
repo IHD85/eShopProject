@@ -50,23 +50,5 @@ namespace Catalog.API.Controllers;
             }
         }
 
-            [HttpGet("besked")]
-            public ActionResult<string> GetHelloMessage()
-            {
-                // Opretter en simpel tekst-streng
-                string besked = "Hej fra min API Controller!";
-
-                // Returnerer et "200 OK" svar med strengen som indhold
-                return Ok(besked);
-            }
-
-            // En endnu simplere version, der returnerer direkte
-            // Denne vil blive fundet på /api/hello
-            [HttpGet]
-            public string GetSimpleText()
-            {
-                return "Dette er en simpel tekst.";
-            }
-
-}
+    }
 

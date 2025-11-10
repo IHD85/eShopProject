@@ -2,6 +2,13 @@
 name: CI Build - Catalog.API (.NET)
 
 on:
+  push:
+    branches: [ main ]
+    # VIGTIGT: Kør KUN hvis der er ændringer i Catalog.API's mappe
+    paths:
+      - 'Microservices/Catalog/Catalog.API/**'
+      - '.github/workflows/catalog-ci-cd.yml' # Kør også, hvis vi ændrer denne fil
+
   # Kør dette workflow, når der oprettes/opdateres en Pull Request til 'main'
   pull_request:
     branches: [ main ]
