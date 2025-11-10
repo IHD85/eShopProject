@@ -282,3 +282,6 @@ http://localhost:7163/catalog/catalog-items
 }
 
 ```
+#Uptime Kuma#
+user: seymen
+pass: seymen123
