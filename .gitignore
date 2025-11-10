@@ -361,5 +361,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/data/mariadb/ib_logfile0
-/data/run/mysqld.pid
+
