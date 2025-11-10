@@ -2,7 +2,7 @@
 
 on:
   push:
-    branches: [ nour ] 
+    branches: [ master ] 
     # VIGTIGT: Trigger kun hvis filer i Catalog Service ændres. 
     paths:
       - 'Microservices/Catalog/**'
