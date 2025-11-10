@@ -93,6 +93,7 @@ namespace eShop.Basket.Application.Services
 
             await _eventBus.PublishAsync(eventMessage);
             _logger.LogInformation($"Published {eventMessage.GetType().Name} for {basket.CustomerId} (Total {totalPrice})");
+            await DeleteBasketAsync(basket.CustomerId);
         }
     }
 }
