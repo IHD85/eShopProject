@@ -110,12 +110,12 @@
       interval: 5s
       timeout: 5s
       retries: 5  
-      
-  uptime-kuma:
-    image: louislam/uptime-kuma:2
-    restart: unless-stopped
-    volumes:
-      - ./data:/app/data
+  
+  gatus:
     ports:
-      - "3001:3001"
+      - 3002:8080
+    container_name: gatus
+    image: twinproduction/gatus:stable
+    volumes:
+      - ./config:/config
     
