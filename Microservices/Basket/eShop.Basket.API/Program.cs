@@ -11,8 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<BasketService>();
 builder.Services.AddHealthChecks();
-builder.Services.AddRabbitMQEventBus(builder.Configuration)
-    .AddSubscription<ProductPriceChangedEvent, ProductPriceChangedEventHandler>();
+builder.Services.AddRabbitMQEventBus(builder.Configuration);
+    // .AddSubscription<ProductPriceChangedEvent, ProductPriceChangedEventHandler>();
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {

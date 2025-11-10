@@ -22,6 +22,8 @@
         condition: service_started
       rabbitmq:
         condition: service_healthy
+    ports:
+      - "7101:8080"
   
 
   catalog-api:
@@ -36,6 +38,8 @@
       condition: service_healthy
      rabbitmq:
       condition: service_healthy
+    ports:
+      - "7102:8080"
 
   identity-api:
     image: identity.api
@@ -49,6 +53,8 @@
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    ports:
+      - "7103:8080"
 
   order-api:
     image: eshop.order.api
@@ -62,6 +68,8 @@
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    ports:
+      - "7104:8080"
       
   redis:
     image: redis:7

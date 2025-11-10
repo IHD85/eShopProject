@@ -41,16 +41,10 @@ var app = builder.Build();
 
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+
     app.MapOpenApi();
     app.MapScalarApiReference();
-}
-else if (app.Environment.IsProduction())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
+
 
 // app.UseHttpsRedirection();
 
