@@ -24,25 +24,28 @@
         condition: service_healthy
     ports:
       - "7101:8080"
+    volumes:
+      - ./logs:/app/logs
   
-
+  
   catalog-api:
     image: catalog.api
     build:
-        context: .
-        dockerfile: Microservices/Catalog/Catalog.API/Dockerfile
+      context: .
+      dockerfile: Microservices/Catalog/Catalog.API/Dockerfile
     environment:
-        ASPNETCORE_ENVIRONMENT: "Docker"
+      ASPNETCORE_ENVIRONMENT: "Docker"
     depends_on:
-        eshop-db:
-            condition: service_healthy
-        rabbitmq:
-            condition: service_healthy
+      eshop-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     ports:
-    - "7102:8080"
+      - "7102:8080"
+    volumes:
+      - ./logs:/app/logs
   
   
-
   identity-api:
     image: identity.api
     build:
@@ -57,6 +60,8 @@
         condition: service_healthy
     ports:
       - "7103:8080"
+    volumes:
+      - ./logs:/app/logs
 
   order-api:
     image: eshop.order.api
@@ -72,7 +77,9 @@
         condition: service_healthy
     ports:
       - "7104:8080"
-      
+    volumes:
+      - ./logs:/app/logs
+  
   redis:
     image: redis:7
     container_name: redis-eshop
@@ -81,7 +88,6 @@
       - ./.docker/env/redis.env
     ports:
       - "6379:6379"
-    
   
   rabbitmq:
     stdin_open: true
@@ -96,7 +102,7 @@
       interval: 5s
       timeout: 5s
       retries: 10
-  
+
   eshop-db:
     container_name: eshop-database
     image: postgres:latest
@@ -109,7 +115,7 @@
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
-      retries: 5  
+      retries: 5
     volumes:
       - ./postgresql:/var/lib/postgresql
   
@@ -120,4 +126,3 @@
     image: twinproduction/gatus:stable
     volumes:
       - ./config:/config
-    
