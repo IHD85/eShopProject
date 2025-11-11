@@ -4,12 +4,14 @@ using StackExchange.Redis;
 using eShop.Basket.Application.Services;
 using eShop.Basket.Domain.Events;
 using RabbitMQEventBus.Extensions;
-
+using Serilog;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<BasketService>();
+builder.Host
+    .UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));builder.Services.AddScoped<BasketService>();
+
 builder.Services.AddHealthChecks();
 builder.Services.AddRabbitMQEventBus(builder.Configuration)
     .AddSubscription<ProductPriceChangedEvent, ProductPriceChangedEventHandler>();

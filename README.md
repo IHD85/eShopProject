@@ -1,4 +1,5 @@
 
+
 # eShop Projekt - Microservices.
 
 ****Gruppe****: Ihab, Seymen, Nour og Adil.
@@ -9,7 +10,7 @@
 
 Ingen manuel opsætning kræves udover at man kører Docker compose filen.
 
-Man skal dog sørge for at port `5432`, `7163`, `6379`, `15672` og `5672` ikke er i brug.
+Man skal dog sørge for at port `5432`, `7163`, `6379`, `15672`, `3002` og `5672` ikke er i brug.
 
 Disse er bevidst exposed (dog vil man i reel produktion ikke expose alle disse).
 
@@ -28,8 +29,6 @@ docker compose build
 
 ---
 
-  
-
 ### Start
 
 
@@ -38,10 +37,17 @@ docker compose build
 docker compose up
 
 ```
+---
+## Health Checks - Gatus
+Til Health Checking har vi brugt Gatus. Gatus er et moderne værktøj til health checks og man sætter det op med en .yaml fil.
+
+Kan tilgås ved: http://localhost:3002/ ved lokalt setup efter Docker compose er kørt.
+Dette er så dog ikke igennem Gatewayen, da vi også skal sikre os at gatewayen fungerer gennem Gatus.
+
+  ![https://i.imgur.com/QTEjcNG.png](https://i.imgur.com/QTEjcNG.png)
 
 ---
 
-  
 
 ## Gateway (YARP)
 
@@ -282,6 +288,3 @@ http://localhost:7163/catalog/catalog-items
 }
 
 ```
-#Uptime Kuma#
-user: seymen
-pass: seymen123

@@ -6,13 +6,13 @@ using eShop.Order.API.IntegrationEvents.Handlers;
 using System.Text.Json.Serialization;
 using RabbitMQEventBus.Abstractions;
 using RabbitMQEventBus.Extensions;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-    .AddEnvironmentVariables();
+
+builder.Host
+    .UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddHealthChecks();
 

@@ -1,0 +1,40 @@
+endpoints:
+  - name: basket-api
+    url: "http://basket-api:8080/health"
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*Healthy*)"
+      - "[RESPONSE_TIME] < 150"
+
+  - name: api-gateway
+    url: "http://api-gateway:8080/health"
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*Healthy*)"
+      - "[RESPONSE_TIME] < 150"
+
+  - name: catalog-api
+    url: "http://catalog-api:8080/health"
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*Healthy*)"
+      - "[RESPONSE_TIME] < 150"
+
+  - name: identity-api
+    url: "http://identity-api:8080/health"
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*Healthy*)"
+      - "[RESPONSE_TIME] < 150"
+
+  - name: order-api
+    url: "http://order-api:8080/health"
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(*Healthy*)"
+      - "[RESPONSE_TIME] < 150"
