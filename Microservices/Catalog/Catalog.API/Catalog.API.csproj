@@ -33,8 +33,4 @@
     </Content>
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include=".github\workflows\catalog-ci-cd.yml" />
-  </ItemGroup>
-
 </Project>
