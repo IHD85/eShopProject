@@ -15,7 +15,7 @@ public class CatalogBrandController : Controller
     {
         _db = db;
     }
-
+    //get
     [HttpGet]
     public async Task<IActionResult> GetCatalogBrands()
     {
