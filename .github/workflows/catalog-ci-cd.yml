@@ -1,5 +1,5 @@
 # Navn på workflowet, som vises i GitHub Actions
-name: CI Build - Catalog.API (.NET)
+name: CI/CD - Catalog.API (Docker)
 
 on:
   push:
@@ -21,8 +21,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Et enkelt job vi kalder "build-dotnet"
-  build-dotnet:
+  # Omdøbt jobbet til at matche, hvad det rent faktisk gør
+  build-and-push-docker:
     # Kør på en standard Ubuntu-maskine
     runs-on: ubuntu-latest
 
@@ -32,18 +32,33 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # Trin 2: Sæt .NET 8 SDK'en op på maskinen
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      # Trin 2: Sæt Docker Buildx op (anbefales for bedre builds)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      # Trin 3: Log ind på Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          dotnet-version: '8.x' # Sæt til den .NET version du bruger
+          # Sikrer, at du bruger samme secret i login som i push
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          
+      # Trin 4: Byg Docker image
+      # --- Fjernet 'Setup .NET', 'Restore' og 'Build' trin ---
+      # --- De er unødvendige, da din Dockerfile selv bygger projektet ---
+      - name: Build Docker image
+        run: |
+          docker build \
+            -f Microservices/Catalog/Catalog.API/Dockerfile \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/catalog-api:latest \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/catalog-api:${{ github.sha }} \
+            .
 
-      # Trin 3: Kør 'dotnet restore' på projektet
-      # Den finder og gendanner alle NuGet-pakker
-      - name: Restore dependencies
-        run: dotnet restore Microservices/Catalog/Catalog.API/Catalog.API.csproj
-
-      # Trin 4: Byg selve projektet
-      # --no-restore fordi vi lige har kørt restore
-      - name: Build project
-        run: dotnet build Microservices/Catalog/Catalog.API/Catalog.API.csproj --no-restore
+      # Trin 5: Push image til Docker Hub
+      # Tilføjet 'if' for KUN at pushe, når du pusher til 'main'-branchen
+      - name: Push image to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/catalog-api:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/catalog-api:${{ github.sha }}
