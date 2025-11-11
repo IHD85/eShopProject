@@ -3,10 +3,13 @@ using Catalog.API.Events;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQEventBus.Extensions;
 using Scalar.AspNetCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Host
+    .UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddDbContext<CatalogDbContext>(options =>
 {

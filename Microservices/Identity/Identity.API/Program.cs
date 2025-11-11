@@ -5,11 +5,13 @@ using Identity.API.Services.JwtTokenGenerator;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddDbContext<AppIdentityDbContext>(options =>
+builder.Host
+    .UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));builder.Services.AddDbContext<AppIdentityDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
         npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(
