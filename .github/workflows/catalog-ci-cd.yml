@@ -3,7 +3,7 @@ name: CI/CD - Catalog.API (Test, Build og Push)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     # Kør workflowet, hvis der er ændringer i API'en, test-projektet ELLER denne fil
     paths:
       - 'Microservices/Catalog/Catalog.API/**'
@@ -11,7 +11,7 @@ on:
       - '.github/workflows/catalog-ci-cd.yml'
 
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
     # Kør også ved PRs til de samme mapper
     paths:
       - 'Microservices/Catalog/Catalog.API/**'
@@ -61,7 +61,7 @@ jobs:
     needs: build-and-test
     
     # Kør KUN på 'main' branchen for at undgå at pushe fra PRs
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     
     runs-on: ubuntu-latest
     
