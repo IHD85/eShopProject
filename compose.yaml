@@ -17,6 +17,9 @@
       dockerfile: Microservices/Basket/eShop.Basket.API/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: "Docker"
+      OTEL_SERVICE_NAME: "basket-api"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-lgtm:4317/"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
     depends_on:
       redis:
         condition: service_started
@@ -35,6 +38,9 @@
       dockerfile: Microservices/Catalog/Catalog.API/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: "Docker"
+      OTEL_SERVICE_NAME: "catalog-api"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-lgtm:4317/"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
     depends_on:
       eshop-db:
         condition: service_healthy
@@ -53,6 +59,9 @@
       dockerfile: Microservices/Identity/Identity.API/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: "Docker"
+      OTEL_SERVICE_NAME: "identity-api"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-lgtm:4317/"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
     depends_on:
       eshop-db:
         condition: service_healthy
@@ -70,6 +79,9 @@
       dockerfile: Microservices/Order/eShop.Order.API/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: "Docker"
+      OTEL_SERVICE_NAME: "order-api"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-lgtm:4317/"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
     depends_on:
       eshop-db:
         condition: service_healthy
@@ -126,3 +138,21 @@
     image: twinproduction/gatus:stable
     volumes:
       - ./config:/config
+  
+  otel-lgtm:
+    container_name: grafana-aio
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - prometheus-data:/var/lib/prometheus
+      - loki-data:/var/loki
+      - tempo-data:/var/tempo
+    restart: unless-stopped
+
+volumes:
+  grafana-data:
+  prometheus-data:
+  loki-data:
+  tempo-data:

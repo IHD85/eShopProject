@@ -1,6 +1,10 @@
 using Catalog.API.Data;
 using Catalog.API.Events;
+using Catalog.API.Extensions;
+using Catalog.API.Extensions;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using RabbitMQEventBus.Extensions;
 using Scalar.AspNetCore;
 using Serilog;
@@ -8,8 +12,19 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Host
-    .UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
+builder.Host.UseSerilog((context, config) =>
+{
+    config.ReadFrom.Configuration(context.Configuration)
+        .WriteTo.OpenTelemetry(
+            endpoint: builder.Configuration.GetValue<string>("Otlp:Endpoint") ?? "http://otel-lgtm:4317/",
+            protocol: Serilog.Sinks.OpenTelemetry.OtlpProtocol.Grpc)
+        .Enrich.FromLogContext();
+});
+
+builder.ConfigureOpenTelemetry();
+
+
+
 
 builder.Services.AddDbContext<CatalogDbContext>(options =>
 {
@@ -37,6 +52,8 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+
+
 var app = builder.Build();
 
 //var eventBus = app.Services.GetRequiredService<EventBusService>();
@@ -62,3 +79,5 @@ app.MapHealthChecks("/health");
 app.MapControllers();
 
 app.Run();
+
+
