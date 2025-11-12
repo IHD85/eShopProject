@@ -16,7 +16,7 @@ on:
       - 'Catalog.API.UnitTests/**'
       - 'eShopProject.sln'
       # Og workflow-filen selv
-      - '.github/workflows/microservices-ci-cd.yml'
+      - '.github/workflows/catalog-ci-cd.yml'
 
   pull_request:
     branches: [ AdilBranch ] # master
@@ -30,7 +30,7 @@ on:
       - 'Microservices/Order/eShop.Order.API/**'
       - 'Catalog.API.UnitTests/**'
       - 'eShopProject.sln'
-      - '.github/workflows/microservices-ci-cd.yml'
+      - '.github/workflows/catalog-ci-cd.yml'
   
   workflow_dispatch:
 
