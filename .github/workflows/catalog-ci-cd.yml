@@ -125,7 +125,6 @@ jobs:
           file: ${{ matrix.dockerfile-path }}
           push: true
           tags: |
-            # Brug service-navnet fra matrixen til tagging
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service-name }}:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.service-name }}:${{ github.sha }}
           cache-from: type=gha
