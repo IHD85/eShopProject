@@ -96,8 +96,6 @@
     image: redis:7
     container_name: redis-eshop
     restart: always
-    env_file:
-      - ./.docker/env/redis.env
     ports:
       - "6379:6379"
   
