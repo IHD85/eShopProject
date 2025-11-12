@@ -1,4 +1,5 @@
 using Identity.API.Data;
+using Identity.API.Extensions;
 using Identity.API.Models;
 using Identity.API.Services.AuthService;
 using Identity.API.Services.JwtTokenGenerator;
@@ -10,8 +11,11 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Host
-    .UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));builder.Services.AddDbContext<AppIdentityDbContext>(options =>
+builder.ConfigureOpenTelemetry();
+
+
+
+builder.Services.AddDbContext<AppIdentityDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
         npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(

@@ -1,5 +1,6 @@
 ﻿using System.Net.Sockets;
 using eShop.Basket.API.EventHandlers;
+using eShop.Basket.API.Extensions;
 using StackExchange.Redis;
 using eShop.Basket.Application.Services;
 using eShop.Basket.Domain.Events;
@@ -9,8 +10,11 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host
-    .UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));builder.Services.AddScoped<BasketService>();
+builder.ConfigureOpenTelemetry();
+
+
+
+builder.Services.AddScoped<BasketService>();
 
 builder.Services.AddHealthChecks();
 builder.Services.AddRabbitMQEventBus(builder.Configuration)

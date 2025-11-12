@@ -4,6 +4,7 @@ using RabbitMQ.Client;
 using eShop.Order.API.IntegrationEvents.Events;
 using eShop.Order.API.IntegrationEvents.Handlers;
 using System.Text.Json.Serialization;
+using eShop.Order.API.Extensions;
 using RabbitMQEventBus.Abstractions;
 using RabbitMQEventBus.Extensions;
 using Serilog;
@@ -11,8 +12,7 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Host
-    .UseSerilog((context, config) => config.ReadFrom.Configuration(context.Configuration));
+builder.ConfigureOpenTelemetry();
 
 builder.Services.AddHealthChecks();
 

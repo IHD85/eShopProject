@@ -12,19 +12,7 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Host.UseSerilog((context, config) =>
-{
-    config.ReadFrom.Configuration(context.Configuration)
-        .WriteTo.OpenTelemetry(
-            endpoint: builder.Configuration.GetValue<string>("Otlp:Endpoint") ?? "http://otel-lgtm:4317/",
-            protocol: Serilog.Sinks.OpenTelemetry.OtlpProtocol.Grpc)
-        .Enrich.FromLogContext();
-});
-
 builder.ConfigureOpenTelemetry();
-
-
-
 
 builder.Services.AddDbContext<CatalogDbContext>(options =>
 {
