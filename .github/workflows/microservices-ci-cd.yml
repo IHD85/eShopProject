@@ -1,5 +1,4 @@
-# Navn på det samlede workflow for alle microservices
-name: CI/CD - Main
+name: CI/CD - Microservices
 
 on:
   push:
@@ -16,7 +15,7 @@ on:
       - 'Catalog.API.UnitTests/**'
       - 'eShopProject.sln'
       # Og workflow-filen selv
-      - '.github/workflows/catalog-ci-cd.yml'
+      - '.github/workflows/microservices-ci-cd.yml'
 
   pull_request:
     branches: [ AdilBranch ] # master
@@ -30,7 +29,7 @@ on:
       - 'Microservices/Order/eShop.Order.API/**'
       - 'Catalog.API.UnitTests/**'
       - 'eShopProject.sln'
-      - '.github/workflows/catalog-ci-cd.yml'
+      - '.github/workflows/microservices-ci-cd.yml'
   
   workflow_dispatch:
 
