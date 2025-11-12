@@ -21,7 +21,7 @@ public static class OpenTelemetryExportersExtension
                 options.Endpoint = new Uri(otlpEndpoint);
             });
 
-            tracerProviderBuilder.AddConsoleExporter(); 
+            // tracerProviderBuilder.AddConsoleExporter(); 
         });
 
         builder.Services.ConfigureOpenTelemetryMeterProvider(meterProviderBuilder =>
@@ -31,7 +31,7 @@ public static class OpenTelemetryExportersExtension
                 options.Endpoint = new Uri(otlpEndpoint);
             });
 
-            meterProviderBuilder.AddConsoleExporter();
+            // meterProviderBuilder.AddConsoleExporter();
         });
 
         builder.Logging.AddOpenTelemetry(options =>
@@ -41,7 +41,7 @@ public static class OpenTelemetryExportersExtension
                 opt.Endpoint = new Uri(otlpEndpoint);
             });
 
-            options.AddConsoleExporter();
+            // options.AddConsoleExporter();
         });
 
         return builder;

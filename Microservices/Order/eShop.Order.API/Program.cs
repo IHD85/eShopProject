@@ -28,7 +28,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<OrderDbContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("OrderDb"),
+    options.UseNpgsql(builder.Configuration.GetConnectionString("eshop_order"),
         npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(
             maxRetryCount: 10,
             maxRetryDelay: TimeSpan.FromSeconds(5),
