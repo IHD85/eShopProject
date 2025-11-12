@@ -2,7 +2,7 @@ name: CI/CD - Microservices
 
 on:
   push:
-    branches: [ AdilBranch ] # master
+    branches: [ master ]
     paths:
       # Lyt efter ændringer i alle relevante microservice- og gateway-mapper
       - 'Gateway/API.Gateway/**'
@@ -18,7 +18,7 @@ on:
       - '.github/workflows/microservices-ci-cd.yml'
 
   pull_request:
-    branches: [ AdilBranch ] # master
+    branches: [ master ]
     paths:
       # Samme mapper som ovenfor
       - 'Gateway/API.Gateway/**'
@@ -71,7 +71,7 @@ jobs:
     needs: build-and-test
     
     # Kør KUN på 'master' branchen for at undgå at pushe fra PRs
-    if: github.event_name == 'push' && github.ref == 'refs/heads/AdilBranch'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     
     runs-on: ubuntu-latest
     
