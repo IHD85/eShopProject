@@ -9,7 +9,7 @@ on:
       - 'Microservices/Basket/eShop.Basket.API/**'
       - 'Microservices/Catalog/Catalog.API/**'
       - 'Microservices/Identity/Identity.API/**'
-      - 'Microservices/Inventory/Inventory.API/**'
+      # - 'Microservices/Inventory/Inventory.API/**'
       - 'Microservices/Order/eShop.Order.API/**'
       # Lyt også på testprojekter og solution-filen
       - 'Catalog.API.UnitTests/**'
@@ -25,7 +25,7 @@ on:
       - 'Microservices/Basket/eShop.Basket.API/**'
       - 'Microservices/Catalog/Catalog.API/**'
       - 'Microservices/Identity/Identity.API/**'
-      - 'Microservices/Inventory/Inventory.API/**'
+      # - 'Microservices/Inventory/Inventory.API/**'
       - 'Microservices/Order/eShop.Order.API/**'
       - 'Catalog.API.UnitTests/**'
       - 'eShopProject.sln'
@@ -91,9 +91,9 @@ jobs:
           - service-name: 'identity-api'
             dockerfile-path: './Microservices/Identity/Identity.API/Dockerfile'
             context-path: '.'
-          - service-name: 'inventory-api'
-            dockerfile-path: './Microservices/Inventory/Inventory.API/src/Dockerfile'
-            context-path: './Microservices/Inventory/Inventory.API' # Node.js context er projektmappen
+          # - service-name: 'inventory-api'
+          #   dockerfile-path: './Microservices/Inventory/Inventory.API/src/Dockerfile'
+          #   context-path: './Microservices/Inventory/Inventory.API' # Node.js context er projektmappen
           - service-name: 'order-api'
             dockerfile-path: './Microservices/Order/eShop.Order.API/Dockerfile'
             context-path: '.'
