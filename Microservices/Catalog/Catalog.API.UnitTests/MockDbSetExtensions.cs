@@ -22,10 +22,7 @@ namespace Catalog.API.UnitTests
             mockSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(data.ElementType);
             mockSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => data.GetEnumerator());
 
-            // Simulerer asynkrone operationer (hvis du ville bruge FirstOrDefaultAsync, ToListAsync osv.)
-            // Da du bruger ToList(), er det ikke strengt nødvendigt for den metode, men godt at have:
-            // mockSet.As<IAsyncEnumerable<T>>().Setup(m => m.GetAsyncEnumerator(default))
-            //     .Returns(new TestAsyncEnumerator<T>(data.GetEnumerator()));
+            
 
             return mockSet;
         }
